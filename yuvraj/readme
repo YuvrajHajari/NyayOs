@@ -1,0 +1,44 @@
+# NyayOS Dashboard API
+
+Backend API + Dashboard for the NyayOS hackathon project.
+
+## Setup
+
+```bash
+npm install
+node seed.js   # populate demo cases (run once)
+npm start      # starts on port 3000
+```
+
+## Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /cases | Bolna webhook — creates a new case |
+| GET | /cases | List all cases (filterable) |
+| GET | /cases/:id | Full case detail |
+| PATCH | /cases/:id/status | Update case status |
+| GET | /health | Health check |
+
+## Query Filters (GET /cases)
+- `?issue_type=unpaid_salary`
+- `?urgency=high`
+- `?status=draft_generated`
+- Combine any: `?issue_type=fir_refusal&urgency=high`
+
+## Valid Values
+
+**issue_type:** `unpaid_salary` | `fir_refusal` | `deposit_withheld` | `pension_delay`
+
+**status:** `new` | `info_needed` | `draft_generated` | `submitted` | `followup_due` | `resolved`
+
+**urgency:** `high` | `medium` | `low`
+
+## Bolna Integration
+
+Tell your teammate to set this webhook URL in Bolna:
+```
+POST https://YOUR-RENDER-URL.onrender.com/cases
+```
+
+The dashboard auto-refreshes every 30 seconds.

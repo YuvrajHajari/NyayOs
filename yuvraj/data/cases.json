@@ -1,0 +1,118 @@
+{
+  "cases": [
+    {
+      "case_id": "case_0a9de442",
+      "caller_name": "Amit Verma",
+      "phone": "+919876501234",
+      "language": "hinglish",
+      "issue_type": "unpaid_salary",
+      "location": "Mumbai",
+      "summary": "Amit has not received salary for 3 months from employer Sunrise Textiles. Amount due is ₹36,000.",
+      "facts": {
+        "employer_name": "Sunrise Textiles",
+        "amount_due": "36000",
+        "months_unpaid": "3",
+        "proof_available": true
+      },
+      "status": "draft_generated",
+      "urgency": "high",
+      "next_step": "Submit complaint to Labour Commissioner, Mumbai",
+      "generated_document": "To,\nThe Labour Commissioner\nMumbai\n\nSub: Complaint regarding non-payment of wages\n\nRespected Sir/Madam,\n\nI, Amit Verma, write to bring to your notice that my employer has failed to pay my salary for 3 months. Amount due: ₹36,000.\n\nYours faithfully,\nAmit Verma",
+      "transcript": "Agent: Hello, this is NyayOS. How can I help?\nCaller: Bhai mera 3 mahine ka salary nahi mila.\nAgent: Employer ka naam kya hai?\nCaller: Sunrise Textiles, Mumbai mein.",
+      "created_at": "2026-06-10T18:07:56.401Z",
+      "updated_at": "2026-06-10T18:07:56.401Z"
+    },
+    {
+      "case_id": "case_38891863",
+      "caller_name": "Akaash",
+      "phone": "8610209653",
+      "language": "en",
+      "issue_type": "unpaid_salary",
+      "location": "BTM, Bengaluru",
+      "summary": "Akaash has not received salary for April 2026 from ABC Services.",
+      "facts": {
+        "employee_name": "Akaash",
+        "phone": "8610209653",
+        "area_or_address": "BTM, Bengaluru",
+        "employer_name": "ABC Services",
+        "employer_address_or_work_location": "Koramangala, Bengaluru",
+        "notice_recipient": "HR",
+        "role": "Delivery Executive",
+        "joining_date": "June 2025",
+        "current_status": "still working",
+        "agreed_salary": "Rs 24000 per month",
+        "unpaid_period": "April 2026",
+        "total_due": "Rs 24000",
+        "other_dues": "none",
+        "prior_payment_request": "none",
+        "proof_available": [
+          "WhatsApp messages",
+          "bank statement",
+          "ID",
+          "work logs"
+        ]
+      },
+      "documents_required": [
+        "offer letter or employment proof",
+        "salary slips or wage records",
+        "bank statement",
+        "WhatsApp/email messages",
+        "ID card",
+        "work logs"
+      ],
+      "document_templates": [
+        {
+          "document_type": "salary_demand_legal_notice_style",
+          "title": "Demand for payment of pending salary and employment dues",
+          "template_name": "Document 1: Salary Demand / Legal Notice-Style Draft To Employer",
+          "fields": {
+            "employee_name": "Akaash",
+            "employee_address": "BTM, Bengaluru",
+            "phone": "8610209653",
+            "employer_name": "ABC Services",
+            "employer_address": "Koramangala, Bengaluru",
+            "notice_recipient": "HR",
+            "role": "Delivery Executive",
+            "joining_date": "June 2025",
+            "salary": "Rs 24000 per month",
+            "unpaid_period": "April 2026",
+            "amount_due": "Rs 24000",
+            "other_dues": "none",
+            "prior_request": "none",
+            "proof_list": "WhatsApp messages, bank statement, ID, work logs",
+            "deadline": "15 days"
+          }
+        },
+        {
+          "document_type": "labour_complaint",
+          "title": "Complaint regarding non-payment of salary/wages by ABC Services",
+          "template_name": "Document 2: Labour Officer / Labour Commissioner Complaint Draft",
+          "fields": {
+            "employee_name": "Akaash",
+            "employee_address": "BTM, Bengaluru",
+            "phone": "8610209653",
+            "employer_name": "ABC Services",
+            "work_location": "Koramangala, Bengaluru",
+            "role": "Delivery Executive",
+            "joining_date": "June 2025",
+            "current_status": "still working",
+            "salary": "Rs 24000 per month",
+            "unpaid_period": "April 2026",
+            "amount_due": "Rs 24000",
+            "other_dues": "none",
+            "prior_request": "none",
+            "proof_list": "WhatsApp messages, bank statement, ID, work logs"
+          }
+        }
+      ],
+      "status": "draft_generated",
+      "urgency": "medium",
+      "next_step": "Send the salary demand draft to HR and keep proof of sending. If payment is not made within 15 days, use the labour complaint draft with supporting documents.",
+      "missing_fields": [],
+      "transcript_summary": "Caller reported unpaid salary from ABC Services in Bengaluru and provided proof details.",
+      "transcript": "",
+      "created_at": "2026-06-10T18:17:44.495Z",
+      "updated_at": "2026-06-10T18:17:44.495Z"
+    }
+  ]
+}
