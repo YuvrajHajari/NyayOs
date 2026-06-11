@@ -13,11 +13,16 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Build document templates from facts ─────────────────────
 function buildDocumentTemplates(facts) {
   const f = facts || {};
+  const proofList = Array.isArray(f.proof_available)
+    ? f.proof_available.join(', ')
+    : (f.proof_available || '');
+
   return [
     {
       document_type: 'salary_demand_legal_notice_style',
@@ -37,7 +42,7 @@ function buildDocumentTemplates(facts) {
         amount_due: f.total_due || '',
         other_dues: f.other_dues || 'none',
         prior_request: f.prior_payment_request || 'none',
-        proof_list: Array.isArray(f.proof_available) ? f.proof_available.join(', ') : (f.proof_available || ''),
+        proof_list: proofList,
         deadline: '15 days',
       }
     },
@@ -59,7 +64,7 @@ function buildDocumentTemplates(facts) {
         amount_due: f.total_due || '',
         other_dues: f.other_dues || 'none',
         prior_request: f.prior_payment_request || 'none',
-        proof_list: Array.isArray(f.proof_available) ? f.proof_available.join(', ') : (f.proof_available || ''),
+        proof_list: proofList,
       }
     }
   ];
@@ -67,55 +72,97 @@ function buildDocumentTemplates(facts) {
 
 // ─── Parse Bolna's payload ────────────────────────────────────
 function parseBody(raw) {
-  if (!raw.case_json) return raw;
-  if (typeof raw.case_json === 'object') return raw.case_json;
+  console.log('[parseBody] content-type body keys:', Object.keys(raw));
+  console.log('[parseBody] raw snippet:', JSON.stringify(raw).slice(0, 300));
 
-  try {
-    return JSON.parse(raw.case_json);
-  } catch (e) {
-    // Truncated — salvage with regex
-    const s = raw.case_json;
-    const get = (key) => (s.match(new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`)) || [])[1] || '';
-
-    const salvaged = {
-      caller_name: get('caller_name'),
-      phone: get('phone'),
-      language: get('language') || 'hi',
-      issue_type: get('issue_type') || 'unpaid_salary',
-      location: get('location'),
-      summary: get('summary') || 'Case received from NyayOS voice agent',
-      status: get('status') || 'draft_generated',
-      urgency: get('urgency') || 'medium',
-      next_step: get('next_step'),
-      transcript_summary: get('transcript_summary'),
-      facts: {},
-    };
-
-    // Extract facts block
-    const fi = s.indexOf('"facts"');
-    if (fi !== -1) {
-      const sub = s.slice(fi);
-      const bo = sub.indexOf('{');
-      const bc = sub.indexOf('}');
-      if (bo !== -1 && bc !== -1) {
-        try { salvaged.facts = JSON.parse(sub.slice(bo, bc + 1)); } catch(e2) {}
-      }
-    }
-
-    // Extract proof_available array
-    const pi = s.indexOf('"proof_available"');
-    if (pi !== -1) {
-      const sub = s.slice(pi);
-      const ao = sub.indexOf('[');
-      const ac = sub.indexOf(']');
-      if (ao !== -1 && ac !== -1) {
-        try { salvaged.facts.proof_available = JSON.parse(sub.slice(ao, ac + 1)); } catch(e2) {}
-      }
-    }
-
-    console.warn('[parseBody] Salvaged:', JSON.stringify(salvaged));
-    return salvaged;
+  // If already flat with issue_type
+  if (raw.issue_type) {
+    console.log('[parseBody] Already flat body');
+    return raw;
   }
+
+  // Bolna sends { case_json: "stringified JSON" }
+  if (raw.case_json !== undefined) {
+    let cj = raw.case_json;
+
+    // Already an object
+    if (typeof cj === 'object') {
+      console.log('[parseBody] case_json is already object');
+      return cj;
+    }
+
+    // It's a string
+    if (typeof cj === 'string') {
+      // Try direct parse
+      try {
+        const parsed = JSON.parse(cj);
+        console.log('[parseBody] Direct parse success, caller_name:', parsed.caller_name);
+        return parsed;
+      } catch(e) {
+        console.log('[parseBody] Direct parse failed:', e.message);
+      }
+
+      // Try unescaping first
+      try {
+        const unescaped = cj.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        const parsed = JSON.parse(unescaped);
+        console.log('[parseBody] Unescape+parse success, caller_name:', parsed.caller_name);
+        return parsed;
+      } catch(e) {
+        console.log('[parseBody] Unescape parse failed:', e.message);
+      }
+
+      // Salvage truncated JSON with regex
+      console.warn('[parseBody] Salvaging truncated JSON...');
+      const s = cj;
+      const get = (key) => {
+        const m = s.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*?)"`));
+        return m ? m[1].replace(/\\"/g, '"') : '';
+      };
+
+      const salvaged = {
+        caller_name: get('caller_name'),
+        phone: get('phone'),
+        language: get('language') || 'hi',
+        issue_type: get('issue_type') || 'unpaid_salary',
+        location: get('location'),
+        summary: get('summary') || 'Case received from NyayOS voice agent',
+        status: get('status') || 'draft_generated',
+        urgency: get('urgency') || 'medium',
+        next_step: get('next_step'),
+        transcript_summary: get('transcript_summary'),
+        facts: {},
+      };
+
+      // Extract facts block — find the last } to handle nested objects
+      const fi = s.indexOf('"facts"');
+      if (fi !== -1) {
+        const sub = s.slice(fi);
+        const bo = sub.indexOf('{');
+        if (bo !== -1) {
+          // Find matching closing brace
+          let depth = 0, bc = -1;
+          for (let i = bo; i < sub.length; i++) {
+            if (sub[i] === '{') depth++;
+            else if (sub[i] === '}') { depth--; if (depth === 0) { bc = i; break; } }
+          }
+          if (bc !== -1) {
+            try {
+              salvaged.facts = JSON.parse(sub.slice(bo, bc + 1));
+              console.log('[parseBody] Facts salvaged:', Object.keys(salvaged.facts));
+            } catch(e2) {
+              console.warn('[parseBody] Facts parse failed:', e2.message);
+            }
+          }
+        }
+      }
+
+      return salvaged;
+    }
+  }
+
+  console.warn('[parseBody] Unknown format, returning raw');
+  return raw;
 }
 
 // ─── POST /cases ─────────────────────────────────────────────
@@ -124,7 +171,9 @@ app.post('/cases', async (req, res) => {
     const body = parseBody(req.body);
     const facts = body.facts || {};
 
-    // Build document templates on the server — not from Bolna
+    console.log('[POST /cases] caller_name:', body.caller_name);
+    console.log('[POST /cases] facts keys:', Object.keys(facts));
+
     const document_templates = buildDocumentTemplates(facts);
 
     const newCase = {
@@ -158,10 +207,10 @@ app.post('/cases', async (req, res) => {
     const { error } = await supabase.from('cases').insert([newCase]);
     if (error) throw error;
 
-    console.log(`[POST /cases] Created: ${newCase.case_id} | ${newCase.issue_type} | ${newCase.caller_name}`);
+    console.log(`[POST /cases] Created: ${newCase.case_id} | ${newCase.caller_name}`);
     res.status(201).json({ case_id: newCase.case_id, status: 'created' });
   } catch (err) {
-    console.error(err);
+    console.error('[POST /cases] Error:', err);
     res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
@@ -225,7 +274,7 @@ app.patch('/cases/:id/status', async (req, res) => {
       .single();
 
     if (error) return res.status(404).json({ error: 'Case not found' });
-    console.log(`[PATCH /cases/${req.params.id}/status] → ${status}`);
+    console.log(`[PATCH] ${req.params.id} → ${status}`);
     res.json(data);
   } catch (err) {
     console.error(err);
@@ -238,5 +287,4 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().
 
 app.listen(PORT, () => {
   console.log(`NyayOS API running on port ${PORT}`);
-  console.log(`Dashboard: http://localhost:${PORT}`);
 });
