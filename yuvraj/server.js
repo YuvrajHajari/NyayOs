@@ -12,8 +12,32 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_PP92x-QEeMUnQwD
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Parse raw body first — Bolna may send unexpected content-type
+app.use((req, res, next) => {
+  let data = '';
+  req.on('data', chunk => { data += chunk; });
+  req.on('end', () => {
+    req.rawBody = data;
+    if (!data) return next();
+    // Try JSON parse
+    try {
+      req.body = JSON.parse(data);
+      return next();
+    } catch(e) {}
+    // Try URL-encoded parse
+    try {
+      const params = new URLSearchParams(data);
+      const obj = {};
+      for (const [k, v] of params.entries()) obj[k] = v;
+      if (Object.keys(obj).length > 0) { req.body = obj; return next(); }
+    } catch(e) {}
+    // Leave as empty
+    req.body = {};
+    next();
+  });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Build document templates from facts ─────────────────────
@@ -168,6 +192,7 @@ function parseBody(raw) {
 // ─── POST /cases ─────────────────────────────────────────────
 app.post('/cases', async (req, res) => {
   try {
+    console.log('[POST /cases] rawBody:', (req.rawBody || '').slice(0, 400));
     const body = parseBody(req.body);
     const facts = body.facts || {};
 
