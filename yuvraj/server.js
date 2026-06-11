@@ -12,18 +12,9 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_PP92x-QEeMUnQwD
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
-
-// Capture raw body before any parsing
-app.use((req, res, next) => {
-  let chunks = [];
-  req.on('data', chunk => chunks.push(chunk));
-  req.on('end', () => {
-    req.rawBody = Buffer.concat(chunks).toString('utf8');
-    console.log('[RAW BODY]:', req.rawBody.slice(0, 500));
-    next();
-  });
-});
-
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.text({ type: '*/*', limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 function buildDocumentTemplates(facts) {
@@ -31,7 +22,6 @@ function buildDocumentTemplates(facts) {
   const proofList = Array.isArray(f.proof_available)
     ? f.proof_available.join(', ')
     : (f.proof_available || '');
-
   return [
     {
       document_type: 'salary_demand_legal_notice_style',
@@ -79,62 +69,52 @@ function buildDocumentTemplates(facts) {
   ];
 }
 
-function extractData(rawBody) {
-  if (!rawBody) return {};
+function extractData(body) {
+  console.log('[extract] typeof body:', typeof body);
+  console.log('[extract] body preview:', JSON.stringify(body).slice(0, 300));
 
-  // Try direct JSON parse
-  try {
-    const parsed = JSON.parse(rawBody);
-    console.log('[extract] Direct parse OK, keys:', Object.keys(parsed));
+  let obj = body;
 
-    // Unwrap case_json if present
-    if (parsed.case_json) {
-      const cj = parsed.case_json;
-      if (typeof cj === 'object') return cj;
-      if (typeof cj === 'string') {
-        try {
-          const inner = JSON.parse(cj);
-          console.log('[extract] Inner parse OK, caller:', inner.caller_name);
-          return inner;
-        } catch(e) {
-          console.warn('[extract] Inner parse failed, salvaging...');
-          return salvage(cj);
-        }
-      }
+  // If body came in as text string
+  if (typeof body === 'string') {
+    try { obj = JSON.parse(body); } catch(e) {
+      try {
+        const p = new URLSearchParams(body);
+        obj = {};
+        for (const [k,v] of p.entries()) obj[k] = v;
+      } catch(e2) { return {}; }
     }
-
-    return parsed;
-  } catch(e) {
-    console.warn('[extract] Direct parse failed:', e.message);
   }
 
-  // Try URL-encoded
-  try {
-    const params = new URLSearchParams(rawBody);
-    const obj = {};
-    for (const [k, v] of params.entries()) obj[k] = v;
-    if (obj.case_json) {
+  if (!obj || typeof obj !== 'object') return {};
+
+  // Already has issue_type at top level
+  if (obj.issue_type) return obj;
+
+  // Wrapped in case_json
+  if (obj.case_json) {
+    const cj = obj.case_json;
+    if (typeof cj === 'object') return cj;
+    if (typeof cj === 'string') {
       try {
-        const inner = JSON.parse(obj.case_json);
-        console.log('[extract] URL-encoded case_json parsed, caller:', inner.caller_name);
-        return inner;
+        const parsed = JSON.parse(cj);
+        console.log('[extract] Unwrapped case_json, caller:', parsed.caller_name);
+        return parsed;
       } catch(e) {
-        return salvage(obj.case_json);
+        console.warn('[extract] case_json parse failed, salvaging');
+        return salvage(cj);
       }
     }
-    if (Object.keys(obj).length > 0) return obj;
-  } catch(e) {}
+  }
 
-  return {};
+  return obj;
 }
 
 function salvage(s) {
-  console.warn('[salvage] Running regex salvage...');
   const get = (key) => {
     const m = s.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*?)"`));
     return m ? m[1].replace(/\\"/g, '"') : '';
   };
-
   const result = {
     caller_name: get('caller_name'),
     phone: get('phone'),
@@ -148,7 +128,6 @@ function salvage(s) {
     transcript_summary: get('transcript_summary'),
     facts: {},
   };
-
   const fi = s.indexOf('"facts"');
   if (fi !== -1) {
     const sub = s.slice(fi);
@@ -160,24 +139,25 @@ function salvage(s) {
         else if (sub[i] === '}') { depth--; if (depth === 0) { bc = i; break; } }
       }
       if (bc !== -1) {
-        try {
-          result.facts = JSON.parse(sub.slice(bo, bc + 1));
-          console.log('[salvage] Facts OK:', Object.keys(result.facts));
-        } catch(e) {}
+        try { result.facts = JSON.parse(sub.slice(bo, bc + 1)); } catch(e) {}
       }
     }
   }
-
   return result;
 }
 
 // POST /cases
 app.post('/cases', async (req, res) => {
   try {
-    const body = extractData(req.rawBody);
+    console.log('[POST] content-type:', req.headers['content-type']);
+    console.log('[POST] body type:', typeof req.body);
+    console.log('[POST] body:', JSON.stringify(req.body).slice(0, 400));
+    console.log('[POST] query:', JSON.stringify(req.query));
+
+    const body = extractData(req.body);
     const facts = body.facts || {};
 
-    console.log('[POST] caller_name:', body.caller_name, '| facts keys:', Object.keys(facts));
+    console.log('[POST] caller_name:', body.caller_name, '| facts:', Object.keys(facts).length, 'keys');
 
     const newCase = {
       case_id: 'case_' + uuidv4().split('-')[0],
@@ -225,12 +205,10 @@ app.get('/cases', async (req, res) => {
       .from('cases')
       .select('case_id, caller_name, issue_type, location, urgency, status, summary, next_step, created_at')
       .order('created_at', { ascending: false });
-
     const { issue_type, urgency, status } = req.query;
     if (issue_type) query = query.eq('issue_type', issue_type);
     if (urgency)    query = query.eq('urgency', urgency);
     if (status)     query = query.eq('status', status);
-
     const { data, error } = await query;
     if (error) throw error;
     res.json(data);
@@ -243,10 +221,7 @@ app.get('/cases', async (req, res) => {
 app.get('/cases/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from('cases')
-      .select('*')
-      .eq('case_id', req.params.id)
-      .single();
+      .from('cases').select('*').eq('case_id', req.params.id).single();
     if (error) return res.status(404).json({ error: 'Case not found' });
     res.json(data);
   } catch (err) {
@@ -257,22 +232,15 @@ app.get('/cases/:id', async (req, res) => {
 // PATCH /cases/:id/status
 app.patch('/cases/:id/status', async (req, res) => {
   try {
-    let body = {};
-    try { body = JSON.parse(req.rawBody || '{}'); } catch(e) {}
-
-    const { status } = body;
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { status } = body || {};
     const valid = ['new', 'info_needed', 'draft_generated', 'submitted', 'followup_due', 'resolved'];
     if (!status) return res.status(400).json({ error: 'Missing status' });
     if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
-
     const updated_at = new Date().toISOString();
     const { data, error } = await supabase
-      .from('cases')
-      .update({ status, updated_at })
-      .eq('case_id', req.params.id)
-      .select('case_id, status, updated_at')
-      .single();
-
+      .from('cases').update({ status, updated_at })
+      .eq('case_id', req.params.id).select('case_id, status, updated_at').single();
     if (error) return res.status(404).json({ error: 'Case not found' });
     res.json(data);
   } catch (err) {
