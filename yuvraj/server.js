@@ -15,50 +15,105 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── Helper: unwrap and parse Bolna's payload ─────────────────
+// ─── Build document templates from facts ─────────────────────
+function buildDocumentTemplates(facts) {
+  const f = facts || {};
+  return [
+    {
+      document_type: 'salary_demand_legal_notice_style',
+      title: 'Demand for payment of pending salary and employment dues',
+      template_name: 'Document 1: Salary Demand / Legal Notice-Style Draft To Employer',
+      fields: {
+        employee_name: f.employee_name || '',
+        employee_address: f.area_or_address || '',
+        phone: f.phone || '',
+        employer_name: f.employer_name || '',
+        employer_address: f.employer_address_or_work_location || '',
+        notice_recipient: f.notice_recipient || 'HR',
+        role: f.role || '',
+        joining_date: f.joining_date || '',
+        salary: f.agreed_salary || '',
+        unpaid_period: f.unpaid_period || '',
+        amount_due: f.total_due || '',
+        other_dues: f.other_dues || 'none',
+        prior_request: f.prior_payment_request || 'none',
+        proof_list: Array.isArray(f.proof_available) ? f.proof_available.join(', ') : (f.proof_available || ''),
+        deadline: '15 days',
+      }
+    },
+    {
+      document_type: 'labour_complaint',
+      title: 'Complaint regarding non-payment of salary/wages',
+      template_name: 'Document 2: Labour Officer / Labour Commissioner Complaint Draft',
+      fields: {
+        employee_name: f.employee_name || '',
+        employee_address: f.area_or_address || '',
+        phone: f.phone || '',
+        employer_name: f.employer_name || '',
+        work_location: f.employer_address_or_work_location || '',
+        role: f.role || '',
+        joining_date: f.joining_date || '',
+        current_status: f.current_status || '',
+        salary: f.agreed_salary || '',
+        unpaid_period: f.unpaid_period || '',
+        amount_due: f.total_due || '',
+        other_dues: f.other_dues || 'none',
+        prior_request: f.prior_payment_request || 'none',
+        proof_list: Array.isArray(f.proof_available) ? f.proof_available.join(', ') : (f.proof_available || ''),
+      }
+    }
+  ];
+}
+
+// ─── Parse Bolna's payload ────────────────────────────────────
 function parseBody(raw) {
-  // Bolna sends { case_json: "stringified JSON" }
-  // But the string often gets truncated. We handle both cases.
-  if (!raw.case_json) return raw; // already flat, use as-is
+  if (!raw.case_json) return raw;
+  if (typeof raw.case_json === 'object') return raw.case_json;
 
-  if (typeof raw.case_json === 'object') return raw.case_json; // already parsed
-
-  // It's a string — try clean parse first
   try {
     return JSON.parse(raw.case_json);
   } catch (e) {
-    // Truncated — salvage what we can with regex
+    // Truncated — salvage with regex
     const s = raw.case_json;
     const get = (key) => (s.match(new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`)) || [])[1] || '';
-    
+
     const salvaged = {
       caller_name: get('caller_name'),
       phone: get('phone'),
       language: get('language') || 'hi',
       issue_type: get('issue_type') || 'unpaid_salary',
       location: get('location'),
-      summary: get('summary') || 'Case data received (truncated)',
-      status: get('status') || 'info_needed',
+      summary: get('summary') || 'Case received from NyayOS voice agent',
+      status: get('status') || 'draft_generated',
       urgency: get('urgency') || 'medium',
       next_step: get('next_step'),
       transcript_summary: get('transcript_summary'),
       facts: {},
     };
 
-    // Try to extract facts block
-    const factsStart = s.indexOf('"facts"');
-    if (factsStart !== -1) {
-      const factsSub = s.slice(factsStart);
-      const braceOpen = factsSub.indexOf('{');
-      const braceClose = factsSub.indexOf('}');
-      if (braceOpen !== -1 && braceClose !== -1) {
-        try {
-          salvaged.facts = JSON.parse(factsSub.slice(braceOpen, braceClose + 1));
-        } catch(e2) {}
+    // Extract facts block
+    const fi = s.indexOf('"facts"');
+    if (fi !== -1) {
+      const sub = s.slice(fi);
+      const bo = sub.indexOf('{');
+      const bc = sub.indexOf('}');
+      if (bo !== -1 && bc !== -1) {
+        try { salvaged.facts = JSON.parse(sub.slice(bo, bc + 1)); } catch(e2) {}
       }
     }
 
-    console.warn('[parseBody] Truncated JSON salvaged. Keys:', Object.keys(salvaged));
+    // Extract proof_available array
+    const pi = s.indexOf('"proof_available"');
+    if (pi !== -1) {
+      const sub = s.slice(pi);
+      const ao = sub.indexOf('[');
+      const ac = sub.indexOf(']');
+      if (ao !== -1 && ac !== -1) {
+        try { salvaged.facts.proof_available = JSON.parse(sub.slice(ao, ac + 1)); } catch(e2) {}
+      }
+    }
+
+    console.warn('[parseBody] Salvaged:', JSON.stringify(salvaged));
     return salvaged;
   }
 }
@@ -67,30 +122,32 @@ function parseBody(raw) {
 app.post('/cases', async (req, res) => {
   try {
     const body = parseBody(req.body);
+    const facts = body.facts || {};
 
-    // Fallback issue_type if still missing
-    const issue_type = body.issue_type || 
-                       body.facts?.issue_type || 
-                       'unpaid_salary';
-
-    const summary = body.summary || 
-                    body.facts?.summary || 
-                    'Case received from NyayOS voice agent';
+    // Build document templates on the server — not from Bolna
+    const document_templates = buildDocumentTemplates(facts);
 
     const newCase = {
       case_id: 'case_' + uuidv4().split('-')[0],
-      caller_name: body.caller_name || body.facts?.employee_name || 'Unknown',
-      phone: body.phone || body.facts?.phone || '',
+      caller_name: body.caller_name || facts.employee_name || 'Unknown',
+      phone: body.phone || facts.phone || '',
       language: body.language || 'hi',
-      issue_type,
-      location: body.location || body.facts?.area_or_address || '',
-      summary,
-      facts: body.facts || {},
-      documents_required: body.documents_required || [],
-      document_templates: body.document_templates || [],
+      issue_type: body.issue_type || 'unpaid_salary',
+      location: body.location || facts.area_or_address || '',
+      summary: body.summary || 'Case received from NyayOS voice agent',
+      facts,
+      documents_required: body.documents_required || [
+        'offer letter or employment proof',
+        'salary slips or wage records',
+        'bank statement',
+        'WhatsApp/email messages',
+        'ID card',
+        'work logs'
+      ],
+      document_templates,
       status: body.status || 'draft_generated',
       urgency: body.urgency || 'medium',
-      next_step: body.next_step || '',
+      next_step: body.next_step || 'Submit complaint to Labour Commissioner',
       missing_fields: body.missing_fields || [],
       transcript_summary: body.transcript_summary || '',
       transcript: body.transcript || '',
