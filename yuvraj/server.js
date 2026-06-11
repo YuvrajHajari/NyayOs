@@ -14,14 +14,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.text({ type: '*/*', limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-function buildDocumentTemplates(facts) {
-  const f = facts || {};
-  const proofList = Array.isArray(f.proof_available)
-    ? f.proof_available.join(', ')
-    : (f.proof_available || '');
+function buildDocumentTemplates(f) {
+  const proofList = typeof f.proof_available === 'string'
+    ? f.proof_available
+    : Array.isArray(f.proof_available) ? f.proof_available.join(', ') : '';
+
   return [
     {
       document_type: 'salary_demand_legal_notice_style',
@@ -29,10 +28,10 @@ function buildDocumentTemplates(facts) {
       template_name: 'Document 1: Salary Demand / Legal Notice-Style Draft To Employer',
       fields: {
         employee_name: f.employee_name || '',
-        employee_address: f.area_or_address || '',
+        employee_address: f.location || '',
         phone: f.phone || '',
         employer_name: f.employer_name || '',
-        employer_address: f.employer_address_or_work_location || '',
+        employer_address: f.employer_address || '',
         notice_recipient: f.notice_recipient || 'HR',
         role: f.role || '',
         joining_date: f.joining_date || '',
@@ -51,10 +50,10 @@ function buildDocumentTemplates(facts) {
       template_name: 'Document 2: Labour Officer / Labour Commissioner Complaint Draft',
       fields: {
         employee_name: f.employee_name || '',
-        employee_address: f.area_or_address || '',
+        employee_address: f.location || '',
         phone: f.phone || '',
         employer_name: f.employer_name || '',
-        work_location: f.employer_address_or_work_location || '',
+        work_location: f.employer_address || '',
         role: f.role || '',
         joining_date: f.joining_date || '',
         current_status: f.current_status || '',
@@ -69,106 +68,41 @@ function buildDocumentTemplates(facts) {
   ];
 }
 
-function extractData(body) {
-  console.log('[extract] typeof body:', typeof body);
-  console.log('[extract] body preview:', JSON.stringify(body).slice(0, 300));
-
-  let obj = body;
-
-  // If body came in as text string
-  if (typeof body === 'string') {
-    try { obj = JSON.parse(body); } catch(e) {
-      try {
-        const p = new URLSearchParams(body);
-        obj = {};
-        for (const [k,v] of p.entries()) obj[k] = v;
-      } catch(e2) { return {}; }
-    }
-  }
-
-  if (!obj || typeof obj !== 'object') return {};
-
-  // Already has issue_type at top level
-  if (obj.issue_type) return obj;
-
-  // Wrapped in case_json
-  if (obj.case_json) {
-    const cj = obj.case_json;
-    if (typeof cj === 'object') return cj;
-    if (typeof cj === 'string') {
-      try {
-        const parsed = JSON.parse(cj);
-        console.log('[extract] Unwrapped case_json, caller:', parsed.caller_name);
-        return parsed;
-      } catch(e) {
-        console.warn('[extract] case_json parse failed, salvaging');
-        return salvage(cj);
-      }
-    }
-  }
-
-  return obj;
-}
-
-function salvage(s) {
-  const get = (key) => {
-    const m = s.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*?)"`));
-    return m ? m[1].replace(/\\"/g, '"') : '';
-  };
-  const result = {
-    caller_name: get('caller_name'),
-    phone: get('phone'),
-    language: get('language') || 'hi',
-    issue_type: get('issue_type') || 'unpaid_salary',
-    location: get('location'),
-    summary: get('summary') || 'Case received from NyayOS',
-    status: get('status') || 'draft_generated',
-    urgency: get('urgency') || 'medium',
-    next_step: get('next_step'),
-    transcript_summary: get('transcript_summary'),
-    facts: {},
-  };
-  const fi = s.indexOf('"facts"');
-  if (fi !== -1) {
-    const sub = s.slice(fi);
-    const bo = sub.indexOf('{');
-    if (bo !== -1) {
-      let depth = 0, bc = -1;
-      for (let i = bo; i < sub.length; i++) {
-        if (sub[i] === '{') depth++;
-        else if (sub[i] === '}') { depth--; if (depth === 0) { bc = i; break; } }
-      }
-      if (bc !== -1) {
-        try { result.facts = JSON.parse(sub.slice(bo, bc + 1)); } catch(e) {}
-      }
-    }
-  }
-  return result;
-}
-
-// POST /cases
 app.post('/cases', async (req, res) => {
   try {
-    console.log('[POST] content-type:', req.headers['content-type']);
-    console.log('[POST] body type:', typeof req.body);
-    console.log('[POST] body:', JSON.stringify(req.body).slice(0, 400));
-    console.log('[POST] query:', JSON.stringify(req.query));
+    const b = req.body;
+    console.log('[POST] body keys:', Object.keys(b));
+    console.log('[POST] body preview:', JSON.stringify(b).slice(0, 300));
 
-    const body = extractData(req.body);
-    const facts = body.facts || {};
-
-    console.log('[POST] caller_name:', body.caller_name, '| facts:', Object.keys(facts).length, 'keys');
+    // Build facts from flat fields
+    const facts = {
+      employee_name: b.employee_name || b.caller_name || '',
+      phone: b.phone || '',
+      area_or_address: b.location || '',
+      employer_name: b.employer_name || '',
+      employer_address_or_work_location: b.employer_address || '',
+      notice_recipient: b.notice_recipient || '',
+      role: b.role || '',
+      joining_date: b.joining_date || '',
+      current_status: b.current_status || '',
+      agreed_salary: b.agreed_salary || '',
+      unpaid_period: b.unpaid_period || '',
+      total_due: b.total_due || '',
+      other_dues: b.other_dues || 'none',
+      prior_payment_request: b.prior_payment_request || 'none',
+      proof_available: b.proof_available || '',
+    };
 
     const newCase = {
       case_id: 'case_' + uuidv4().split('-')[0],
-      caller_name: body.caller_name || facts.employee_name || 'Unknown',
-      phone: body.phone || facts.phone || '',
-      language: body.language || 'hi',
-      issue_type: body.issue_type || 'unpaid_salary',
-      location: body.location || facts.area_or_address || '',
-      summary: body.summary || 'Case received from NyayOS voice agent',
+      caller_name: b.caller_name || b.employee_name || 'Unknown',
+      phone: b.phone || '',
+      language: b.language || 'hi',
+      issue_type: b.issue_type || 'unpaid_salary',
+      location: b.location || '',
+      summary: b.summary || 'Case received from NyayOS voice agent',
       facts,
-      documents_required: body.documents_required || [
+      documents_required: [
         'offer letter or employment proof',
         'salary slips or wage records',
         'bank statement',
@@ -176,13 +110,13 @@ app.post('/cases', async (req, res) => {
         'ID card',
         'work logs'
       ],
-      document_templates: buildDocumentTemplates(facts),
-      status: body.status || 'draft_generated',
-      urgency: body.urgency || 'medium',
-      next_step: body.next_step || 'Submit complaint to Labour Commissioner',
-      missing_fields: body.missing_fields || [],
-      transcript_summary: body.transcript_summary || '',
-      transcript: body.transcript || '',
+      document_templates: buildDocumentTemplates({ ...b, ...facts }),
+      status: b.status || 'draft_generated',
+      urgency: b.urgency || 'medium',
+      next_step: b.next_step || 'Submit complaint to Labour Commissioner',
+      missing_fields: [],
+      transcript_summary: b.transcript_summary || '',
+      transcript: '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -198,7 +132,6 @@ app.post('/cases', async (req, res) => {
   }
 });
 
-// GET /cases
 app.get('/cases', async (req, res) => {
   try {
     let query = supabase
@@ -217,7 +150,6 @@ app.get('/cases', async (req, res) => {
   }
 });
 
-// GET /cases/:id
 app.get('/cases/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -229,11 +161,9 @@ app.get('/cases/:id', async (req, res) => {
   }
 });
 
-// PATCH /cases/:id/status
 app.patch('/cases/:id/status', async (req, res) => {
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { status } = body || {};
+    const { status } = req.body;
     const valid = ['new', 'info_needed', 'draft_generated', 'submitted', 'followup_due', 'resolved'];
     if (!status) return res.status(400).json({ error: 'Missing status' });
     if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
