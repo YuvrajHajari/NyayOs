@@ -13,27 +13,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
 
-// Parse raw body first — Bolna may send unexpected content-type
+// Capture raw body before any parsing
 app.use((req, res, next) => {
-  let data = '';
-  req.on('data', chunk => { data += chunk; });
+  let chunks = [];
+  req.on('data', chunk => chunks.push(chunk));
   req.on('end', () => {
-    req.rawBody = data;
-    if (!data) return next();
-    // Try JSON parse
-    try {
-      req.body = JSON.parse(data);
-      return next();
-    } catch(e) {}
-    // Try URL-encoded parse
-    try {
-      const params = new URLSearchParams(data);
-      const obj = {};
-      for (const [k, v] of params.entries()) obj[k] = v;
-      if (Object.keys(obj).length > 0) { req.body = obj; return next(); }
-    } catch(e) {}
-    // Leave as empty
-    req.body = {};
+    req.rawBody = Buffer.concat(chunks).toString('utf8');
     next();
   });
 });
@@ -94,110 +79,131 @@ function buildDocumentTemplates(facts) {
   ];
 }
 
-// ─── Parse Bolna's payload ────────────────────────────────────
-function parseBody(raw) {
-  console.log('[parseBody] content-type body keys:', Object.keys(raw));
-  console.log('[parseBody] raw snippet:', JSON.stringify(raw).slice(0, 300));
+// ─── Extract case data from anywhere Bolna might send it ─────
+function extractCaseData(req) {
+  const raw = req.rawBody || '';
+  const query = req.query || {};
 
-  // If already flat with issue_type
-  if (raw.issue_type) {
-    console.log('[parseBody] Already flat body');
-    return raw;
+  console.log('[extract] rawBody length:', raw.length);
+  console.log('[extract] rawBody preview:', raw.slice(0, 200));
+  console.log('[extract] query keys:', Object.keys(query));
+
+  // Try 1: parse raw body as JSON
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      console.log('[extract] Raw JSON parse success, keys:', Object.keys(parsed));
+      return unwrap(parsed);
+    } catch(e) {}
+
+    // Try 2: URL-encoded body
+    try {
+      const params = new URLSearchParams(raw);
+      const obj = {};
+      for (const [k, v] of params.entries()) obj[k] = v;
+      if (Object.keys(obj).length > 0) {
+        console.log('[extract] URL-encoded parse success, keys:', Object.keys(obj));
+        return unwrap(obj);
+      }
+    } catch(e) {}
+
+    // Try 3: raw body IS the case_json string directly
+    try {
+      const parsed = JSON.parse(raw.trim().replace(/^case_json=/, ''));
+      console.log('[extract] Direct case_json parse success');
+      return parsed;
+    } catch(e) {}
   }
 
-  // Bolna sends { case_json: "stringified JSON" }
-  if (raw.case_json !== undefined) {
-    let cj = raw.case_json;
+  // Try 4: query string has case_json
+  if (query.case_json) {
+    try {
+      const parsed = JSON.parse(query.case_json);
+      console.log('[extract] Query case_json parse success');
+      return parsed;
+    } catch(e) {}
+  }
 
-    // Already an object
-    if (typeof cj === 'object') {
-      console.log('[parseBody] case_json is already object');
-      return cj;
-    }
+  console.warn('[extract] Could not extract data from request');
+  return {};
+}
 
-    // It's a string
+function unwrap(obj) {
+  // Already flat with issue_type
+  if (obj.issue_type) return obj;
+
+  // Wrapped in case_json
+  if (obj.case_json) {
+    const cj = obj.case_json;
+    if (typeof cj === 'object') return cj;
     if (typeof cj === 'string') {
-      // Try direct parse
       try {
         const parsed = JSON.parse(cj);
-        console.log('[parseBody] Direct parse success, caller_name:', parsed.caller_name);
+        console.log('[unwrap] case_json string parse success, caller:', parsed.caller_name);
         return parsed;
       } catch(e) {
-        console.log('[parseBody] Direct parse failed:', e.message);
+        console.warn('[unwrap] case_json string parse failed:', e.message);
+        // Salvage with regex
+        return salvage(cj);
       }
-
-      // Try unescaping first
-      try {
-        const unescaped = cj.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-        const parsed = JSON.parse(unescaped);
-        console.log('[parseBody] Unescape+parse success, caller_name:', parsed.caller_name);
-        return parsed;
-      } catch(e) {
-        console.log('[parseBody] Unescape parse failed:', e.message);
-      }
-
-      // Salvage truncated JSON with regex
-      console.warn('[parseBody] Salvaging truncated JSON...');
-      const s = cj;
-      const get = (key) => {
-        const m = s.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*?)"`));
-        return m ? m[1].replace(/\\"/g, '"') : '';
-      };
-
-      const salvaged = {
-        caller_name: get('caller_name'),
-        phone: get('phone'),
-        language: get('language') || 'hi',
-        issue_type: get('issue_type') || 'unpaid_salary',
-        location: get('location'),
-        summary: get('summary') || 'Case received from NyayOS voice agent',
-        status: get('status') || 'draft_generated',
-        urgency: get('urgency') || 'medium',
-        next_step: get('next_step'),
-        transcript_summary: get('transcript_summary'),
-        facts: {},
-      };
-
-      // Extract facts block — find the last } to handle nested objects
-      const fi = s.indexOf('"facts"');
-      if (fi !== -1) {
-        const sub = s.slice(fi);
-        const bo = sub.indexOf('{');
-        if (bo !== -1) {
-          // Find matching closing brace
-          let depth = 0, bc = -1;
-          for (let i = bo; i < sub.length; i++) {
-            if (sub[i] === '{') depth++;
-            else if (sub[i] === '}') { depth--; if (depth === 0) { bc = i; break; } }
-          }
-          if (bc !== -1) {
-            try {
-              salvaged.facts = JSON.parse(sub.slice(bo, bc + 1));
-              console.log('[parseBody] Facts salvaged:', Object.keys(salvaged.facts));
-            } catch(e2) {
-              console.warn('[parseBody] Facts parse failed:', e2.message);
-            }
-          }
-        }
-      }
-
-      return salvaged;
     }
   }
 
-  console.warn('[parseBody] Unknown format, returning raw');
-  return raw;
+  return obj;
+}
+
+function salvage(s) {
+  console.warn('[salvage] Attempting regex salvage...');
+  const get = (key) => {
+    const m = s.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*?)"`));
+    return m ? m[1].replace(/\\"/g, '"') : '';
+  };
+
+  const result = {
+    caller_name: get('caller_name'),
+    phone: get('phone'),
+    language: get('language') || 'hi',
+    issue_type: get('issue_type') || 'unpaid_salary',
+    location: get('location'),
+    summary: get('summary') || 'Case received from NyayOS',
+    status: get('status') || 'draft_generated',
+    urgency: get('urgency') || 'medium',
+    next_step: get('next_step'),
+    transcript_summary: get('transcript_summary'),
+    facts: {},
+  };
+
+  // Extract facts block with proper brace matching
+  const fi = s.indexOf('"facts"');
+  if (fi !== -1) {
+    const sub = s.slice(fi);
+    const bo = sub.indexOf('{');
+    if (bo !== -1) {
+      let depth = 0, bc = -1;
+      for (let i = bo; i < sub.length; i++) {
+        if (sub[i] === '{') depth++;
+        else if (sub[i] === '}') { depth--; if (depth === 0) { bc = i; break; } }
+      }
+      if (bc !== -1) {
+        try {
+          result.facts = JSON.parse(sub.slice(bo, bc + 1));
+          console.log('[salvage] Facts extracted:', Object.keys(result.facts));
+        } catch(e) { console.warn('[salvage] Facts parse failed'); }
+      }
+    }
+  }
+
+  return result;
 }
 
 // ─── POST /cases ─────────────────────────────────────────────
 app.post('/cases', async (req, res) => {
   try {
-    console.log('[POST /cases] rawBody:', (req.rawBody || '').slice(0, 400));
-    const body = parseBody(req.body);
+    const body = extractCaseData(req);
     const facts = body.facts || {};
 
-    console.log('[POST /cases] caller_name:', body.caller_name);
-    console.log('[POST /cases] facts keys:', Object.keys(facts));
+    console.log('[POST] caller_name:', body.caller_name);
+    console.log('[POST] facts keys:', Object.keys(facts));
 
     const document_templates = buildDocumentTemplates(facts);
 
@@ -232,11 +238,11 @@ app.post('/cases', async (req, res) => {
     const { error } = await supabase.from('cases').insert([newCase]);
     if (error) throw error;
 
-    console.log(`[POST /cases] Created: ${newCase.case_id} | ${newCase.caller_name}`);
+    console.log(`[POST] Created: ${newCase.case_id} | ${newCase.caller_name}`);
     res.status(201).json({ case_id: newCase.case_id, status: 'created' });
   } catch (err) {
-    console.error('[POST /cases] Error:', err);
-    res.status(500).json({ error: err.message || 'Internal server error' });
+    console.error('[POST] Error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -258,7 +264,7 @@ app.get('/cases', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message || 'Internal server error' });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -275,14 +281,18 @@ app.get('/cases/:id', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message || 'Internal server error' });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // ─── PATCH /cases/:id/status ──────────────────────────────────
 app.patch('/cases/:id/status', async (req, res) => {
   try {
-    const { status } = req.body;
+    // Parse body manually since we're not using express.json()
+    let body = {};
+    try { body = JSON.parse(req.rawBody || '{}'); } catch(e) {}
+
+    const { status } = body;
     const validStatuses = ['new', 'info_needed', 'draft_generated', 'submitted', 'followup_due', 'resolved'];
 
     if (!status) return res.status(400).json({ error: 'Missing status field' });
@@ -299,11 +309,10 @@ app.patch('/cases/:id/status', async (req, res) => {
       .single();
 
     if (error) return res.status(404).json({ error: 'Case not found' });
-    console.log(`[PATCH] ${req.params.id} → ${status}`);
     res.json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message || 'Internal server error' });
+    res.status(500).json({ error: err.message });
   }
 });
 
