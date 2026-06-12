@@ -94,7 +94,13 @@
       width: 50%;
       flex-shrink: 0;
       background: #2A2A2A;
-      /* Replace this div with your image */
+      overflow: hidden;
+    }
+    .carousel-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .carousel-body {
       width: 50%;
@@ -595,9 +601,10 @@
 <!-- ══ NEWS CAROUSEL ══════════════════════════════════════════ -->
 <div class="carousel-wrap">
 
+  <!-- Slide 0: Labour Law → Unpaid Salary -->
   <div class="carousel-item active" id="ci-0">
     <div class="carousel-img">
-      <!-- Replace this div with your image -->
+      <img src="/images/unpaidsalary.webp" alt="Unpaid Salary"/>
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Labour Law</div>
@@ -607,9 +614,10 @@
     </div>
   </div>
 
+  <!-- Slide 1: Tenancy Law → Deposit Withheld -->
   <div class="carousel-item" id="ci-1">
     <div class="carousel-img">
-      <!-- Replace this div with your image -->
+      <img src="/images/deposit.jpg" alt="Security Deposit"/>
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Tenancy Law</div>
@@ -619,9 +627,10 @@
     </div>
   </div>
 
+  <!-- Slide 2: Criminal Law → Police / FIR Refusal -->
   <div class="carousel-item" id="ci-2">
     <div class="carousel-img">
-      <!-- Replace this div with your image -->
+      <img src="/images/police.avif" alt="Police FIR Refusal"/>
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Criminal Law</div>
@@ -631,9 +640,10 @@
     </div>
   </div>
 
+  <!-- Slide 3: Pension & Banking → Pension Delay -->
   <div class="carousel-item" id="ci-3">
     <div class="carousel-img">
-      <!-- Replace this div with your image -->
+      <img src="/images/pension.jpg" alt="Pension Delay"/>
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Pension &amp; Banking</div>
@@ -949,7 +959,7 @@
       '</div>';
   }
 
-  /* ── BUILD DOC CONTENT (preserved exactly) ──────────────────── */
+  /* ── BUILD DOC CONTENT ──────────────────────────────────────── */
   function buildDocContent(template) {
     const fields = template.fields || {};
     if (Object.keys(fields).length === 0) {
@@ -1288,12 +1298,6 @@ ${escHtml(fields.phone || '')}`;
     const hrs = Math.floor(mins / 60);
     if (hrs < 24)  return hrs + 'h ago';
     return Math.floor(hrs / 24) + 'd ago';
-  }
-
-  function formatDate(isoStr) {
-    return new Date(isoStr).toLocaleString('en-IN', {
-      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-    });
   }
 
   function escHtml(str) {
