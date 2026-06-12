@@ -207,46 +207,147 @@ app.post('/cases', async (req, res) => {
     console.log('[POST] body keys:', Object.keys(b));
     console.log('[POST] body preview:', JSON.stringify(b).slice(0, 300));
 
-    // Build facts from flat fields
-    const facts = {
-      employee_name: b.employee_name || b.caller_name || '',
-      phone: b.phone || '',
-      area_or_address: b.location || '',
-      employer_name: b.employer_name || '',
-      employer_address_or_work_location: b.employer_address || '',
-      notice_recipient: b.notice_recipient || '',
-      role: b.role || '',
-      joining_date: b.joining_date || '',
-      current_status: b.current_status || '',
-      agreed_salary: b.agreed_salary || '',
-      unpaid_period: b.unpaid_period || '',
-      total_due: b.total_due || '',
-      other_dues: b.other_dues || 'none',
-      prior_payment_request: b.prior_payment_request || 'none',
-      proof_available: b.proof_available || '',
-    };
+    // Build facts based on issue type
+    const issue_type = b.issue_type || 'unpaid_salary';
+    let facts = {};
+    let documents_required = [];
+    let default_next_step = '';
+
+    if (issue_type === 'fir_refusal') {
+      facts = {
+        caller_name: b.caller_name || '',
+        phone: b.phone || '',
+        location: b.location || '',
+        police_station_name: b.police_station_name || '',
+        police_station_address: b.police_station_address || '',
+        officer_spoken_to: b.officer_spoken_to || '',
+        incident_type: b.incident_type || '',
+        incident_date: b.incident_date || '',
+        incident_location: b.incident_location || '',
+        accused_details: b.accused_details || '',
+        date_of_visit: b.date_of_visit || '',
+        refusal_reason: b.refusal_reason || '',
+        written_complaint_submitted: b.written_complaint_submitted || '',
+        senior_officer_approached: b.senior_officer_approached || '',
+        proof_available: b.proof_available || '',
+      };
+      documents_required = [
+        'ID proof (Aadhaar/Voter ID/PAN)',
+        'Written complaint copy given to police',
+        'Acknowledgement receipt or stamp (if given)',
+        'Registered post receipt (if sent by post)',
+        'Incident photos or videos',
+        'WhatsApp/email messages',
+        'Medical report (if assault/injury)',
+        'Witness names and contact numbers',
+      ];
+      default_next_step = 'File written complaint to SP/DCP. If refused, approach Magistrate under CrPC Section 156(3).';
+    } else if (issue_type === 'deposit_withheld') {
+      facts = {
+        caller_name: b.caller_name || '',
+        phone: b.phone || '',
+        location: b.location || '',
+        landlord_name: b.landlord_name || '',
+        landlord_address: b.landlord_address || '',
+        property_address: b.property_address || '',
+        deposit_amount: b.deposit_amount || '',
+        payment_mode: b.payment_mode || '',
+        deposit_date: b.deposit_date || '',
+        vacating_date: b.vacating_date || '',
+        notice_given: b.notice_given || '',
+        keys_handed_over: b.keys_handed_over || '',
+        refusal_reason: b.refusal_reason || '',
+        written_demand_submitted: b.written_demand_submitted || '',
+        authority_approached: b.authority_approached || '',
+        proof_available: b.proof_available || '',
+      };
+      documents_required = [
+        'ID proof (Aadhaar/Voter ID/PAN)',
+        'Original rent agreement or lease deed',
+        'Deposit payment receipt or bank transfer record',
+        'Advance notice copy given to landlord',
+        'Key handover acknowledgement (if available)',
+        'Move-out photos or videos',
+        'Electricity/water/gas NOC or final bill',
+        'WhatsApp/email messages with landlord',
+        'Written deposit demand letter and landlord reply',
+      ];
+      default_next_step = 'Send legal notice to landlord. File complaint at Rent Authority or Consumer Forum if no response in 15 days.';
+    } else if (issue_type === 'pension_delay') {
+      facts = {
+        caller_name: b.caller_name || '',
+        phone: b.phone || '',
+        location: b.location || '',
+        issue_category: b.issue_category || '',
+        authority_name: b.authority_name || '',
+        reference_number: b.reference_number || '',
+        application_date: b.application_date || '',
+        problem_description: b.problem_description || '',
+        problem_start_date: b.problem_start_date || '',
+        department_contacted: b.department_contacted || '',
+        department_response: b.department_response || '',
+        written_grievance_submitted: b.written_grievance_submitted || '',
+        written_reply_received: b.written_reply_received || '',
+        authority_approached: b.authority_approached || '',
+        impact_suffered: b.impact_suffered || '',
+        proof_available: b.proof_available || '',
+      };
+      documents_required = [
+        'Aadhaar Card / ID Proof',
+        'Pension Payment Order (PPO) copy',
+        'Pension sanction order',
+        'Bank passbook and account statement',
+        'Pension application copy',
+        'EPFO records (if applicable)',
+        'Service records or retirement order',
+        'Previous grievance applications and replies',
+        'Medical records (if relevant)',
+      ];
+      default_next_step = 'File grievance on pgportal.gov.in. Escalate to District Collector or Pension Ombudsman if unresolved.';
+    } else {
+      // unpaid_salary
+      facts = {
+        employee_name: b.employee_name || b.caller_name || '',
+        phone: b.phone || '',
+        area_or_address: b.location || '',
+        employer_name: b.employer_name || '',
+        employer_address_or_work_location: b.employer_address || '',
+        notice_recipient: b.notice_recipient || '',
+        role: b.role || '',
+        joining_date: b.joining_date || '',
+        current_status: b.current_status || '',
+        agreed_salary: b.agreed_salary || '',
+        unpaid_period: b.unpaid_period || '',
+        total_due: b.total_due || '',
+        other_dues: b.other_dues || 'none',
+        prior_payment_request: b.prior_payment_request || 'none',
+        proof_available: b.proof_available || '',
+      };
+      documents_required = [
+        'Offer letter or employment proof',
+        'Salary slips or wage records',
+        'Bank statement',
+        'WhatsApp/email messages',
+        'ID card',
+        'Work logs',
+      ];
+      default_next_step = 'Submit complaint to Labour Commissioner. Send legal notice to employer first.';
+    }
 
     const newCase = {
       case_id: 'case_' + uuidv4().split('-')[0],
       caller_name: b.caller_name || b.employee_name || 'Unknown',
       phone: b.phone || '',
       language: b.language || 'hi',
-      issue_type: b.issue_type || 'unpaid_salary',
+      issue_type,
       location: b.location || '',
       summary: b.summary || 'Case received from NyayOS voice agent',
       facts,
-      documents_required: [
-        'offer letter or employment proof',
-        'salary slips or wage records',
-        'bank statement',
-        'WhatsApp/email messages',
-        'ID card',
-        'work logs'
-      ],
-      document_templates: buildDocumentTemplates({ ...b, ...facts }, b.issue_type || 'unpaid_salary'),
+      documents_required,
+      document_templates: buildDocumentTemplates({ ...b, ...facts }, issue_type),
       status: b.status || 'draft_generated',
       urgency: b.urgency || 'medium',
-      next_step: b.next_step || 'Submit complaint to Labour Commissioner',
+      next_step: b.next_step || default_next_step,
       missing_fields: [],
       transcript_summary: b.transcript_summary || '',
       transcript: '',
