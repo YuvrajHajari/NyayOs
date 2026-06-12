@@ -1,326 +1,772 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NyayOS — Case Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; color: #1a1a2e; }
-
-    header {
-      background: #1a1a2e;
-      color: #fff;
-      padding: 16px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
     }
-    header .logo { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
-    header .logo span { color: #f4a261; }
-    header .subtitle { font-size: 12px; color: #aaa; margin-top: 2px; }
 
-    .container { display: flex; height: calc(100vh - 60px); }
+    :root {
+      --canvas:  #FBF9F6;
+      --ink:     #1E2229;
+      --crimson: #9E2A2B;
+      --green:   #2A5C43;
+      --amber:   #B45309;
+      --border:  #D4C9B8;
+      --serif:   'Playfair Display', Georgia, 'Times New Roman', serif;
+      --mono:    'Courier New', Courier, monospace;
+    }
 
-    .sidebar {
-      width: 380px;
-      min-width: 320px;
-      background: #fff;
-      border-right: 1px solid #e0e0e0;
+    html { height: 100%; }
+    body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Georgia, serif;
+    }
+
+    /* ── MASTHEAD ─────────────────────────────────────────────── */
+    .masthead {
+      flex-shrink: 0;
+      border-bottom: 2px solid var(--ink);
+      padding: 16px 0 10px;
+      text-align: center;
+      background: var(--canvas);
+    }
+    .masthead-nav {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .masthead-nav a {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      margin: 0 10px;
+    }
+    .masthead-nav a.active { font-weight: bold; }
+    .masthead-nav .sep { color: var(--border); margin: 0 2px; }
+    .masthead-brand {
+      font-family: var(--serif);
+      font-size: 60px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .masthead-rule {
+      border: none;
+      border-top: 1px solid var(--ink);
+      margin: 8px 48px 7px;
+    }
+    .masthead-meta {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    /* ── CAROUSEL ─────────────────────────────────────────────── */
+    .carousel-wrap {
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      height: 300px;
+    }
+    .carousel-item {
+      display: none;
+      height: 300px;
+    }
+    .carousel-item.active { display: flex; }
+    .carousel-img {
+      width: 50%;
+      flex-shrink: 0;
+      background: #2A2A2A;
+      /* Replace this div with your image */
+    }
+    .carousel-body {
+      width: 50%;
+      padding: 30px 44px;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+    }
+    .carousel-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--crimson);
+    }
+    .carousel-headline {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+    .carousel-snippet {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #555;
+    }
+    .carousel-link {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--crimson);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    /* ── VIEW WRAPPERS ────────────────────────────────────────── */
+    #view-ngo {
+      flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
-    .sidebar-header {
-      padding: 16px;
-      border-bottom: 1px solid #eee;
-      background: #fafafa;
-    }
-    .sidebar-header h2 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-    .filters select {
-      flex: 1;
-      padding: 6px 8px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 12px;
-      background: #fff;
-      cursor: pointer;
-    }
-    #case-count { font-size: 12px; color: #777; margin-top: 8px; }
-
-    .case-list { overflow-y: auto; flex: 1; }
-    .case-card {
-      padding: 14px 16px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .case-card:hover { background: #f5f7ff; }
-    .case-card.active { background: #eef1ff; border-left: 3px solid #4361ee; }
-    .case-card .name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-    .case-card .meta { font-size: 12px; color: #666; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .case-card .location { color: #999; font-size: 11px; margin-top: 3px; }
-    .case-card .summary-preview { font-size: 12px; color: #555; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .detail {
-      flex: 1;
+    #view-citizen {
+      display: none;
       overflow-y: auto;
-      padding: 24px 28px;
-      background: #f0f2f5;
     }
-    .empty-state {
+
+    /* ── FILTER RIBBON ────────────────────────────────────────── */
+    .filter-ribbon {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--canvas);
+    }
+    .filter-ribbon label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      white-space: nowrap;
+    }
+    .filter-ribbon select {
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--canvas);
+      color: var(--ink);
+      cursor: pointer;
+      min-width: 140px;
+    }
+    .filter-ribbon select:focus { outline: 1px solid var(--ink); }
+    #ribbon-count {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── WORKSPACE SPLIT ──────────────────────────────────────── */
+    .workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left: case list 40% */
+    .col-list {
+      width: 40%;
+      min-width: 260px;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      background: var(--canvas);
+    }
+    .case-card {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .case-card:hover { background: #F3EFE7; }
+    .case-card.active {
+      background: #EDE8DE;
+      border-left: 3px solid var(--ink);
+      padding-left: 15px;
+    }
+    .cc-name {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 3px;
+      color: var(--ink);
+    }
+    .cc-meta {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    .cc-urgency-row { margin-bottom: 4px; }
+    .urg-high   { font-family: var(--mono); font-size: 11px; font-weight: bold; color: var(--crimson); }
+    .urg-medium { font-family: var(--mono); font-size: 11px; font-weight: bold; color: var(--amber);   }
+    .urg-low    { font-family: var(--mono); font-size: 11px; font-weight: bold; color: var(--green);   }
+    .cc-status  { font-family: var(--mono); font-size: 10px; color: #888; margin-left: 8px; }
+    .cc-summary {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Right: detail panel 60% */
+    .col-detail {
+      width: 60%;
+      overflow-y: auto;
+      padding: 28px 36px;
+      background: var(--canvas);
+    }
+    .detail-empty {
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      color: #999;
-      gap: 12px;
+      gap: 8px;
     }
-    .empty-state .icon { font-size: 48px; }
-
-    .detail-card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 24px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    .detail-empty-title {
+      font-family: var(--serif);
+      font-size: 24px;
+      color: #C8C0B4;
     }
-    .detail-card h3 {
-      font-size: 13px;
-      font-weight: 600;
+    .detail-empty-sub {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #888;
-      margin-bottom: 14px;
+      color: #C8C0B4;
     }
 
-    .case-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .case-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .meta-item label { font-size: 11px; color: #999; display: block; margin-bottom: 2px; }
-    .meta-item span { font-size: 14px; font-weight: 500; }
-
-    .status-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .status-btn {
-      padding: 6px 14px;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      font-size: 12px;
-      cursor: pointer;
-      background: #fff;
-      transition: all 0.15s;
-    }
-    .status-btn:hover { border-color: #4361ee; color: #4361ee; }
-    .status-btn.active { background: #4361ee; color: #fff; border-color: #4361ee; }
-
-    .facts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .fact-item { background: #f8f9fa; border-radius: 6px; padding: 10px 14px; }
-    .fact-item label { font-size: 11px; color: #888; display: block; margin-bottom: 3px; }
-    .fact-item span { font-size: 13px; font-weight: 500; word-break: break-word; }
-
-    /* Document tabs */
-    .doc-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid #eee; }
-    .doc-tab {
-      padding: 8px 18px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      color: #888;
-      transition: all 0.15s;
-    }
-    .doc-tab.active { color: #4361ee; border-bottom-color: #4361ee; }
-    .doc-tab:hover { color: #4361ee; }
-    .doc-panel { display: none; margin-top: 14px; }
-    .doc-panel.active { display: block; }
-
-    .doc-box {
-      background: #f8f9fb;
-      border: 1px solid #e0e4f0;
-      border-radius: 8px;
-      padding: 16px;
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      white-space: pre-wrap;
-      line-height: 1.7;
-      max-height: 320px;
-      overflow-y: auto;
-    }
-
-    .docs-required-list {
+    /* ── STEP TRACKER ─────────────────────────────────────────── */
+    .step-track {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
+      gap: 0;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
     }
-    .doc-chip {
-      background: #f0f4ff;
-      border: 1px solid #c7d2fe;
-      color: #3730a3;
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 12px;
+    .step {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.3px;
+      color: var(--border);
+      white-space: nowrap;
+    }
+    .step::after { content: ' → '; color: var(--border); }
+    .step:last-child::after { content: ''; }
+    .step.done  { color: var(--green); }
+    .step.now   { color: var(--ink); font-weight: bold; text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ── DETAIL SECTIONS ──────────────────────────────────────── */
+    .ds {
+      margin-bottom: 26px;
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ds:last-child { border-bottom: none; }
+    .ds-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    .citizen-name {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+    .header-meta-row {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #666;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .issue-tag {
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--ink);
     }
 
-    .transcript-box {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 14px;
+    /* ── FACTS GRID ───────────────────────────────────────────── */
+    .facts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+    }
+    .fi {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 9px 13px;
+    }
+    .fi-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #999;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .fi-val {
       font-size: 13px;
-      line-height: 1.7;
-      max-height: 200px;
+      color: var(--ink);
+      word-break: break-word;
+    }
+
+    /* ── NEXT STEP BOX ────────────────────────────────────────── */
+    .next-step {
+      border-left: 4px solid var(--crimson);
+      padding: 13px 16px;
+      background: #FEF8F8;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--ink);
+    }
+
+    /* ── STATUS BUTTONS ───────────────────────────────────────── */
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      border: 1px solid var(--border);
+    }
+    .status-btn {
+      flex: 1;
+      padding: 8px 10px;
+      border: none;
+      border-right: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: var(--canvas);
+      color: #999;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .status-btn:last-child { border-right: none; }
+    .status-btn:hover { background: #EDE8DE; color: var(--ink); }
+    .status-btn.active {
+      background: var(--ink);
+      color: var(--canvas);
+      font-weight: bold;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── DOC TABS ─────────────────────────────────────────────── */
+    .doc-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .doc-tab {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 7px 16px;
+      cursor: pointer;
+      color: #999;
+      border: none;
+      background: transparent;
+    }
+    .doc-tab.active {
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      font-weight: bold;
+    }
+    .doc-tab:hover { color: var(--ink); }
+    .doc-panel { display: none; margin-top: 12px; }
+    .doc-panel.active { display: block; }
+    .doc-box {
+      background: #F5F1E8;
+      border: 1px solid var(--border);
+      padding: 18px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      white-space: pre-wrap;
+      line-height: 1.85;
+      max-height: 360px;
+      overflow-y: auto;
+      color: var(--ink);
+    }
+
+    /* ── DOCS REQUIRED ────────────────────────────────────────── */
+    .docs-list {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 2;
+      color: var(--ink);
+    }
+
+    /* ── TRANSCRIPT ───────────────────────────────────────────── */
+    .transcript-box {
+      background: #F5F1E8;
+      border: 1px solid var(--border);
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.85;
+      max-height: 240px;
       overflow-y: auto;
       white-space: pre-wrap;
+      color: var(--ink);
     }
 
-    .missing-field-chip {
-      background: #fef3c7;
-      border: 1px solid #fcd34d;
-      color: #92400e;
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 12px;
+    /* ── MISSING TAGS ─────────────────────────────────────────── */
+    .missing-tag {
       display: inline-block;
-      margin: 3px;
+      font-family: var(--mono);
+      font-size: 10px;
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      color: var(--amber);
+      background: #FFFBF0;
     }
 
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
+    /* ── LOADING / EMPTY ──────────────────────────────────────── */
+    .load-txt {
+      font-family: var(--mono);
       font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
+      color: #AAA;
+      padding: 32px 20px;
+      text-align: center;
       letter-spacing: 0.5px;
     }
-    .badge-urgency-high   { background: #fee2e2; color: #dc2626; }
-    .badge-urgency-medium { background: #fef3c7; color: #d97706; }
-    .badge-urgency-low    { background: #d1fae5; color: #059669; }
 
-    .badge-status-new             { background: #dbeafe; color: #1d4ed8; }
-    .badge-status-info_needed     { background: #fef3c7; color: #b45309; }
-    .badge-status-draft_generated { background: #ede9fe; color: #7c3aed; }
-    .badge-status-submitted       { background: #d1fae5; color: #065f46; }
-    .badge-status-followup_due    { background: #ffedd5; color: #c2410c; }
-    .badge-status-resolved        { background: #f0fdf4; color: #166534; }
-
-    .badge-issue-unpaid_salary    { background: #fef9c3; color: #713f12; }
-    .badge-issue-fir_refusal      { background: #fee2e2; color: #991b1b; }
-    .badge-issue-deposit_withheld { background: #dbeafe; color: #1e40af; }
-    .badge-issue-pension_delay    { background: #f0fdf4; color: #14532d; }
-
-    .next-step-box {
-      background: #f0fdf4;
-      border-left: 4px solid #22c55e;
-      padding: 12px 16px;
-      border-radius: 0 8px 8px 0;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .loading { text-align: center; color: #999; padding: 40px; font-size: 14px; }
+    /* ── TOAST ────────────────────────────────────────────────── */
     .toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: #1a1a2e;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 13px;
+      background: var(--ink);
+      color: var(--canvas);
+      padding: 11px 20px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.5px;
       opacity: 0;
       transition: opacity 0.3s;
       z-index: 999;
+      border: 1px solid var(--border);
     }
     .toast.show { opacity: 1; }
+
+    /* ── CITIZEN VIEW ─────────────────────────────────────────── */
+    .citizen-wrap {
+      max-width: 500px;
+      margin: 48px auto;
+      padding: 0 24px;
+    }
+    .citizen-h {
+      font-family: var(--serif);
+      font-size: 34px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+    .citizen-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: #777;
+      margin-bottom: 26px;
+      line-height: 1.7;
+    }
+    .citizen-input {
+      display: block;
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--canvas);
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .citizen-input:focus { outline: 1px solid var(--ink); }
+    .citizen-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--ink);
+      background: var(--canvas);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--ink);
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .citizen-btn:hover { background: var(--ink); color: var(--canvas); }
+    .citizen-err {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--crimson);
+      margin-top: 10px;
+      display: none;
+    }
+    .citizen-result { margin-top: 28px; }
+    .citizen-result-rule {
+      border: none;
+      border-top: 2px solid var(--ink);
+      margin-bottom: 20px;
+    }
+    .citizen-status-line {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 22px;
+      color: var(--ink);
+    }
+    .citizen-note {
+      margin-top: 22px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #AAA;
+      letter-spacing: 0.5px;
+    }
+    .section-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <div>
-    <div class="logo">Nyay<span>OS</span></div>
-    <div class="subtitle">NGO Case Management Dashboard</div>
+<!-- ══ MASTHEAD ═══════════════════════════════════════════════ -->
+<div class="masthead">
+  <div class="masthead-nav">
+    <a id="nav-ngo" class="active" onclick="switchView('ngo')">[ View: NGO Workspace ]</a>
+    <span class="sep">|</span>
+    <a id="nav-citizen" onclick="switchView('citizen')">[ View: Citizen Case Lookup ]</a>
   </div>
-  <div style="font-size:12px; color:#aaa;" id="live-count">Loading cases...</div>
-</header>
+  <div class="masthead-brand">NyayOS</div>
+  <hr class="masthead-rule"/>
+  <div class="masthead-meta">Bangalore, India &nbsp;&nbsp;|&nbsp;&nbsp; Legal Infrastructure for Citizen Rights &nbsp;&nbsp;|&nbsp;&nbsp; Vol.&nbsp;I</div>
+</div>
 
-<div class="container">
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h2>Cases</h2>
-      <div class="filters">
-        <select id="filter-issue" onchange="loadCases()">
-          <option value="">All Issues</option>
-          <option value="unpaid_salary">Unpaid Salary</option>
-          <option value="fir_refusal">FIR Refusal</option>
-          <option value="deposit_withheld">Deposit Withheld</option>
-          <option value="pension_delay">Pension Delay</option>
-        </select>
-        <select id="filter-urgency" onchange="loadCases()">
-          <option value="">All Urgency</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-        <select id="filter-status" onchange="loadCases()">
-          <option value="">All Status</option>
-          <option value="new">New</option>
-          <option value="info_needed">Info Needed</option>
-          <option value="draft_generated">Draft Generated</option>
-          <option value="submitted">Submitted</option>
-          <option value="followup_due">Follow-up Due</option>
-          <option value="resolved">Resolved</option>
-        </select>
+<!-- ══ NEWS CAROUSEL ══════════════════════════════════════════ -->
+<div class="carousel-wrap">
+
+  <div class="carousel-item active" id="ci-0">
+    <div class="carousel-img">
+      <!-- Replace this div with your image -->
+    </div>
+    <div class="carousel-body">
+      <div class="carousel-tag">Labour Law</div>
+      <div class="carousel-headline">New Labour Codes Mandate 48-Hour Full &amp; Final Settlement</div>
+      <div class="carousel-snippet">As of April 2026, the Code on Wages (COW) Rules are now in force. Employers must settle all pending salaries within 2 working days of an employee leaving. Workers can now file expedited complaints with the Labour Commissioner.</div>
+      <div class="carousel-link">Read Full Analysis ↗</div>
+    </div>
+  </div>
+
+  <div class="carousel-item" id="ci-1">
+    <div class="carousel-img">
+      <!-- Replace this div with your image -->
+    </div>
+    <div class="carousel-body">
+      <div class="carousel-tag">Tenancy Law</div>
+      <div class="carousel-headline">Karnataka Rent Act 2026: 10-Month Deposit Tradition Declared Illegal</div>
+      <div class="carousel-snippet">The Karnataka Rent Amendment Act 2025 has capped residential security deposits at a maximum of 2 months' rent. Landlords withholding deposits for wear and tear now face stiff penalties through the new Kaveri 2.0 Rent Tribunals.</div>
+      <div class="carousel-link">Read Full Analysis ↗</div>
+    </div>
+  </div>
+
+  <div class="carousel-item" id="ci-2">
+    <div class="carousel-img">
+      <!-- Replace this div with your image -->
+    </div>
+    <div class="carousel-body">
+      <div class="carousel-tag">Criminal Law</div>
+      <div class="carousel-headline">SC 2026 Ruling: Mandatory 14-Day Window for Preliminary Inquiries</div>
+      <div class="carousel-snippet">Under Section 173 of the BNSS, police cannot use preliminary inquiry to delay FIRs indefinitely. Officers must decide within 14 days. Citizens can appeal to the SP under Section 173(4) via digital e-FIR channels.</div>
+      <div class="carousel-link">Read Full Analysis ↗</div>
+    </div>
+  </div>
+
+  <div class="carousel-item" id="ci-3">
+    <div class="carousel-img">
+      <!-- Replace this div with your image -->
+    </div>
+    <div class="carousel-body">
+      <div class="carousel-tag">Pension &amp; Banking</div>
+      <div class="carousel-headline">RBI Mandates 8% Interest Penalty for Delayed Pension Payouts</div>
+      <div class="carousel-snippet">The RBI Disbursement Directions 2026 require banks to automatically compensate pensioners for delays. An interest rate of 8% per annum must be credited without the pensioner needing to file a request.</div>
+      <div class="carousel-link">Read Full Analysis ↗</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ VIEW A — NGO WORKSPACE ═════════════════════════════════ -->
+<div id="view-ngo">
+
+  <!-- Filter ribbon -->
+  <div class="filter-ribbon">
+    <label>Issue</label>
+    <select id="filter-issue" onchange="loadCases()">
+      <option value="">All Issues</option>
+      <option value="unpaid_salary">Unpaid Salary</option>
+      <option value="fir_refusal">FIR Refusal</option>
+      <option value="deposit_withheld">Deposit Withheld</option>
+      <option value="pension_delay">Pension Delay</option>
+    </select>
+    <label>Urgency</label>
+    <select id="filter-urgency" onchange="loadCases()">
+      <option value="">All</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <label>Status</label>
+    <select id="filter-status" onchange="loadCases()">
+      <option value="">All</option>
+      <option value="new">New</option>
+      <option value="info_needed">Info Needed</option>
+      <option value="draft_generated">Draft Generated</option>
+      <option value="submitted">Submitted</option>
+      <option value="followup_due">Follow-up Due</option>
+      <option value="resolved">Resolved</option>
+    </select>
+    <span id="ribbon-count"></span>
+  </div>
+
+  <!-- Two-column split -->
+  <div class="workspace">
+    <div class="col-list" id="case-list">
+      <div class="load-txt">Loading cases...</div>
+    </div>
+    <div class="col-detail" id="detail">
+      <div class="detail-empty">
+        <div class="detail-empty-title">Select a Case</div>
+        <div class="detail-empty-sub">Cases are created automatically when a citizen calls NyayOS</div>
       </div>
-      <div id="case-count"></div>
-    </div>
-    <div class="case-list" id="case-list">
-      <div class="loading">Loading cases...</div>
     </div>
   </div>
 
-  <div class="detail" id="detail">
-    <div class="empty-state">
-      <div class="icon">⚖️</div>
-      <div style="font-size:16px; font-weight:600;">Select a case to view details</div>
-      <div style="font-size:13px;">Cases are created automatically when a citizen calls NyayOS</div>
-    </div>
+</div>
+
+<!-- ══ VIEW B — CITIZEN LOOKUP ════════════════════════════════ -->
+<div id="view-citizen">
+  <div class="citizen-wrap">
+    <div class="citizen-h">Access Your Case File</div>
+    <div class="citizen-sub">Enter your registered phone number and access PIN to view your case.</div>
+
+    <input class="citizen-input" type="tel"      id="c-phone" placeholder="Phone Number"/>
+    <input class="citizen-input" type="password" id="c-pin"   placeholder="Case Access PIN"/>
+    <button class="citizen-btn" onclick="lookupCase()">Access Case File →</button>
+
+    <div class="citizen-err" id="c-err"></div>
+    <div id="c-result"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+  /* ── DATA ───────────────────────────────────────────────────── */
   let allCases = [];
-  let activeId = null;
+  let activeId  = null;
 
   const ISSUE_LABELS = {
-    unpaid_salary: 'Unpaid Salary',
-    fir_refusal: 'FIR Refusal',
+    unpaid_salary:    'Unpaid Salary',
+    fir_refusal:      'FIR Refusal',
     deposit_withheld: 'Deposit Withheld',
-    pension_delay: 'Pension Delay',
+    pension_delay:    'Pension Delay',
   };
 
   const STATUS_LABELS = {
-    new: 'New',
-    info_needed: 'Info Needed',
+    new:             'New',
+    info_needed:     'Info Needed',
     draft_generated: 'Draft Generated',
-    submitted: 'Submitted',
-    followup_due: 'Follow-up Due',
-    resolved: 'Resolved',
+    submitted:       'Submitted',
+    followup_due:    'Follow-up Due',
+    resolved:        'Resolved',
   };
 
+  const STATUS_KEYS = ['new','info_needed','draft_generated','submitted','followup_due','resolved'];
+
+  /* ── VIEW SWITCHER ──────────────────────────────────────────── */
+  function switchView(v) {
+    const isNgo = v === 'ngo';
+    document.getElementById('view-ngo').style.display     = isNgo ? 'flex' : 'none';
+    document.getElementById('view-citizen').style.display = isNgo ? 'none' : 'block';
+    document.getElementById('nav-ngo').classList.toggle('active', isNgo);
+    document.getElementById('nav-citizen').classList.toggle('active', !isNgo);
+  }
+
+  /* ── CAROUSEL ───────────────────────────────────────────────── */
+  let carouselIdx = 0;
+  setInterval(function () {
+    document.getElementById('ci-' + carouselIdx).classList.remove('active');
+    carouselIdx = (carouselIdx + 1) % 4;
+    document.getElementById('ci-' + carouselIdx).classList.add('active');
+  }, 5000);
+
+  /* ── TOAST ──────────────────────────────────────────────────── */
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+    setTimeout(function () { t.classList.remove('show'); }, 2500);
   }
 
+  /* ── URGENCY HTML ───────────────────────────────────────────── */
+  function urgencyHtml(u) {
+    if (u === 'high')   return '<span class="urg-high">[ HIGH ]</span>';
+    if (u === 'medium') return '<span class="urg-medium">[ MED ]</span>';
+    if (u === 'low')    return '<span class="urg-low">[ LOW ]</span>';
+    return '<span>[' + u.toUpperCase() + ']</span>';
+  }
+
+  /* ── LOAD CASES (GET /cases) ────────────────────────────────── */
   async function loadCases() {
     const issue   = document.getElementById('filter-issue').value;
     const urgency = document.getElementById('filter-urgency').value;
@@ -332,180 +778,182 @@
     if (status)  params.append('status', status);
 
     try {
-      const res = await fetch(`/cases?${params}`);
-      allCases = await res.json();
+      const res  = await fetch('/cases?' + params);
+      allCases   = await res.json();
       renderList(allCases);
-      document.getElementById('live-count').textContent =
-        `${allCases.length} case${allCases.length !== 1 ? 's' : ''} total`;
     } catch (e) {
       document.getElementById('case-list').innerHTML =
-        '<div class="loading">⚠️ Could not load cases. Is the server running?</div>';
+        '<div class="load-txt">Could not load cases. Is the server running?</div>';
     }
   }
 
+  /* ── RENDER LIST ────────────────────────────────────────────── */
   function renderList(cases) {
-    const el = document.getElementById('case-list');
-    document.getElementById('case-count').textContent =
-      `Showing ${cases.length} case${cases.length !== 1 ? 's' : ''}`;
+    const el  = document.getElementById('case-list');
+    const cnt = document.getElementById('ribbon-count');
+    if (cnt) cnt.textContent = cases.length + ' case' + (cases.length !== 1 ? 's' : '');
 
     if (!cases.length) {
-      el.innerHTML = '<div class="loading">No cases match the filters.</div>';
+      el.innerHTML = '<div class="load-txt">No cases match the filters.</div>';
       return;
     }
 
-    el.innerHTML = cases.map(c => `
-      <div class="case-card ${c.case_id === activeId ? 'active' : ''}"
-           onclick="loadDetail('${c.case_id}')">
-        <div class="name">${c.caller_name}</div>
-        <div class="meta">
-          <span class="badge badge-issue-${c.issue_type}">${ISSUE_LABELS[c.issue_type] || c.issue_type}</span>
-          <span class="badge badge-urgency-${c.urgency}">${c.urgency}</span>
-          <span class="badge badge-status-${c.status}">${STATUS_LABELS[c.status] || c.status}</span>
-        </div>
-        <div class="location">📍 ${c.location || '—'} · ${timeAgo(c.created_at)}</div>
-        <div class="summary-preview">${c.summary}</div>
-      </div>
-    `).join('');
+    el.innerHTML = cases.map(function (c) {
+      return '<div class="case-card' + (c.case_id === activeId ? ' active' : '') + '"' +
+             ' onclick="loadDetail(\'' + c.case_id + '\')">' +
+        '<div class="cc-name">'  + escHtml(c.caller_name) + '</div>' +
+        '<div class="cc-meta">'  + (ISSUE_LABELS[c.issue_type] || c.issue_type) +
+                                   ' &nbsp;·&nbsp; ' + escHtml(c.location || '—') +
+                                   ' &nbsp;·&nbsp; ' + timeAgo(c.created_at) + '</div>' +
+        '<div class="cc-urgency-row">' + urgencyHtml(c.urgency) +
+          '<span class="cc-status">' + (STATUS_LABELS[c.status] || c.status) + '</span></div>' +
+        '<div class="cc-summary">' + escHtml(c.summary) + '</div>' +
+      '</div>';
+    }).join('');
   }
 
+  /* ── LOAD DETAIL (GET /cases/:id) ───────────────────────────── */
   async function loadDetail(caseId) {
     activeId = caseId;
     renderList(allCases);
     const detail = document.getElementById('detail');
-    detail.innerHTML = '<div class="loading">Loading...</div>';
+    detail.innerHTML = '<div class="load-txt">Loading...</div>';
 
     try {
-      const res = await fetch(`/cases/${caseId}`);
-      const c = await res.json();
+      const res = await fetch('/cases/' + caseId);
+      const c   = await res.json();
       renderDetail(c);
     } catch (e) {
-      detail.innerHTML = '<div class="loading">⚠️ Could not load case detail.</div>';
+      detail.innerHTML = '<div class="load-txt">Could not load case detail.</div>';
     }
   }
 
+  /* ── RENDER DETAIL ──────────────────────────────────────────── */
   function renderDetail(c) {
-    // Key facts grid
-    const factsHtml = Object.entries(c.facts || {}).map(([k, v]) => {
-      let display = v;
-      if (v === true) display = '✅ Yes';
-      else if (v === false) display = '❌ No';
-      else if (Array.isArray(v)) display = v.join(', ');
-      return `<div class="fact-item">
-        <label>${k.replace(/_/g,' ').toUpperCase()}</label>
-        <span>${display}</span>
-      </div>`;
+    /* Step tracker */
+    const curIdx = STATUS_KEYS.indexOf(c.status);
+    const stepsHtml = STATUS_KEYS.map(function (s, i) {
+      var cls = 'step';
+      if (i < curIdx) cls += ' done';
+      if (i === curIdx) cls += ' now';
+      return '<span class="' + cls + '">' + STATUS_LABELS[s] + '</span>';
     }).join('');
 
-    // Status buttons
-    const statusButtons = Object.keys(STATUS_LABELS).map(s => `
-      <button class="status-btn ${c.status === s ? 'active' : ''}"
-        onclick="updateStatus('${c.case_id}', '${s}')">${STATUS_LABELS[s]}</button>
-    `).join('');
+    /* Key facts */
+    const entries = Object.entries(c.facts || {});
+    let factsHtml = '';
+    if (!entries.length) {
+      factsHtml = '<div style="font-family:var(--mono);font-size:11px;color:#AAA;padding:10px;">No structured facts available.</div>';
+    } else {
+      factsHtml = entries.map(function ([k, v]) {
+        var display = v;
+        if (v === true)        display = 'Yes';
+        else if (v === false)  display = 'No';
+        else if (Array.isArray(v)) display = v.join(', ');
+        return '<div class="fi">' +
+          '<span class="fi-lbl">' + k.replace(/_/g, ' ') + '</span>' +
+          '<span class="fi-val">' + escHtml(String(display)) + '</span>' +
+          '</div>';
+      }).join('');
+    }
 
-    // Documents section — tabs if multiple, single box if one or none
+    /* Status buttons */
+    const statusButtons = STATUS_KEYS.map(function (s) {
+      return '<button class="status-btn' + (c.status === s ? ' active' : '') + '"' +
+             ' onclick="updateStatus(\'' + c.case_id + '\',\'' + s + '\')">' +
+             STATUS_LABELS[s] + '</button>';
+    }).join('');
+
+    /* Documents section */
     let docsHtml = '';
     const templates = c.document_templates || [];
 
     if (templates.length === 0) {
-      // Fallback to old generated_document field
       docsHtml = c.generated_document
-        ? `<div class="doc-box">${escHtml(c.generated_document)}</div>`
-        : `<p style="color:#999;font-size:13px;">No document generated yet.</p>`;
+        ? '<div class="doc-box">' + escHtml(c.generated_document) + '</div>'
+        : '<div style="font-family:var(--mono);font-size:11px;color:#AAA;">No document generated yet.</div>';
     } else if (templates.length === 1) {
       docsHtml = buildDocContent(templates[0]);
     } else {
-      // Multiple documents — tabbed UI
-      const tabs = templates.map((t, i) => `
-        <div class="doc-tab ${i === 0 ? 'active' : ''}"
-             onclick="switchTab(${i})"
-             id="tab-${i}">Doc ${i + 1}: ${shortTitle(t.template_name || t.title)}</div>
-      `).join('');
-
-      const panels = templates.map((t, i) => `
-        <div class="doc-panel ${i === 0 ? 'active' : ''}" id="panel-${i}">
-          <div style="font-size:12px;color:#888;margin-bottom:8px;">${escHtml(t.title || '')}</div>
-          ${buildDocContent(t)}
-        </div>
-      `).join('');
-
-      docsHtml = `<div class="doc-tabs">${tabs}</div>${panels}`;
+      const tabs = templates.map(function (t, i) {
+        return '<div class="doc-tab' + (i === 0 ? ' active' : '') + '"' +
+               ' onclick="switchTab(' + i + ')" id="tab-' + i + '">Doc ' + (i + 1) + '</div>';
+      }).join('');
+      const panels = templates.map(function (t, i) {
+        return '<div class="doc-panel' + (i === 0 ? ' active' : '') + '" id="panel-' + i + '">' +
+               buildDocContent(t) + '</div>';
+      }).join('');
+      docsHtml = '<div class="doc-tabs">' + tabs + '</div>' + panels;
     }
 
-    // Documents required chips
-    const docsRequired = (c.documents_required || []).map(d =>
-      `<span class="doc-chip">📎 ${escHtml(d)}</span>`
-    ).join('');
+    /* Documents required */
+    const docsReq = (c.documents_required || []).map(function (d) {
+      return '<div>- ' + escHtml(d) + '</div>';
+    }).join('');
 
-    // Missing fields
+    /* Missing fields */
     const missingHtml = (c.missing_fields || []).length
-      ? (c.missing_fields.map(f => `<span class="missing-field-chip">⚠️ ${escHtml(f)}</span>`).join(''))
-      : '<span style="color:#059669;font-size:13px;">✅ All information collected</span>';
+      ? c.missing_fields.map(function (f) {
+          return '<span class="missing-tag">' + escHtml(f) + '</span>';
+        }).join('')
+      : '<span style="font-family:var(--mono);font-size:11px;color:var(--green);">All information collected.</span>';
 
-    // Transcript — prefer transcript_summary, fall back to transcript
+    /* Transcript */
     const transcriptText = c.transcript_summary || c.transcript || 'No transcript available.';
 
-    document.getElementById('detail').innerHTML = `
-      <div class="detail-card">
-        <div class="case-title">${escHtml(c.caller_name)}</div>
-        <div class="case-meta-grid">
-          <div class="meta-item"><label>Issue Type</label><span class="badge badge-issue-${c.issue_type}">${ISSUE_LABELS[c.issue_type] || c.issue_type}</span></div>
-          <div class="meta-item"><label>Urgency</label><span class="badge badge-urgency-${c.urgency}">${c.urgency}</span></div>
-          <div class="meta-item"><label>Phone</label><span>${escHtml(c.phone || '—')}</span></div>
-          <div class="meta-item"><label>Location</label><span>${escHtml(c.location || '—')}</span></div>
-          <div class="meta-item"><label>Language</label><span>${escHtml(c.language || '—')}</span></div>
-          <div class="meta-item"><label>Case ID</label><span style="font-size:12px;color:#888;">${c.case_id}</span></div>
-          <div class="meta-item"><label>Created</label><span>${formatDate(c.created_at)}</span></div>
-          <div class="meta-item"><label>Updated</label><span>${formatDate(c.updated_at)}</span></div>
-        </div>
-      </div>
+    document.getElementById('detail').innerHTML =
+      '<div class="step-track">' + stepsHtml + '</div>' +
 
-      <div class="detail-card">
-        <h3>📝 Summary</h3>
-        <p style="font-size:14px;line-height:1.6;">${escHtml(c.summary)}</p>
-      </div>
+      '<div class="ds">' +
+        '<div class="citizen-name">' + escHtml(c.caller_name) + '</div>' +
+        '<div class="header-meta-row">' +
+          '<span class="issue-tag">' + (ISSUE_LABELS[c.issue_type] || c.issue_type) + '</span>' +
+          urgencyHtml(c.urgency) +
+          '<span>&#9990; ' + escHtml(c.phone || '—') + '</span>' +
+          '<span>&#9632; ' + escHtml(c.location || '—') + '</span>' +
+        '</div>' +
+      '</div>' +
 
-      <div class="detail-card">
-        <h3>🔑 Key Facts</h3>
-        <div class="facts-grid">${factsHtml || '<span style="color:#999;font-size:13px;">No structured facts available.</span>'}</div>
-      </div>
+      '<div class="ds">' +
+        '<div class="ds-label">Key Facts</div>' +
+        '<div class="facts-grid">' + factsHtml + '</div>' +
+      '</div>' +
 
-      <div class="detail-card">
-        <h3>⚠️ Missing Information</h3>
-        ${missingHtml}
-      </div>
+      '<div class="ds">' +
+        '<div class="ds-label">Next Step</div>' +
+        '<div class="next-step">' + escHtml(c.next_step || 'Awaiting agent analysis.') + '</div>' +
+      '</div>' +
 
-      <div class="detail-card">
-        <h3>✅ Recommended Next Step</h3>
-        <div class="next-step-box">${escHtml(c.next_step || 'Awaiting agent analysis.')}</div>
-      </div>
+      '<div class="ds">' +
+        '<div class="ds-label">Missing Information</div>' +
+        missingHtml +
+      '</div>' +
 
-      <div class="detail-card">
-        <h3>🔄 Update Status</h3>
-        <p style="font-size:12px;color:#888;margin-bottom:10px;">Current: <strong>${STATUS_LABELS[c.status] || c.status}</strong></p>
-        <div class="status-selector">${statusButtons}</div>
-      </div>
+      '<div class="ds">' +
+        '<div class="ds-label">Update Status</div>' +
+        '<div class="status-row">' + statusButtons + '</div>' +
+      '</div>' +
 
-      <div class="detail-card">
-        <h3>📄 Generated Documents</h3>
-        ${docsHtml}
-      </div>
+      '<div class="ds">' +
+        '<div class="ds-label">Generated Documents</div>' +
+        docsHtml +
+      '</div>' +
 
-      ${docsRequired ? `<div class="detail-card">
-        <h3>📎 Documents Required from Citizen</h3>
-        <div class="docs-required-list">${docsRequired}</div>
-      </div>` : ''}
+      (docsReq
+        ? '<div class="ds"><div class="ds-label">Documents Required from Citizen</div><div class="docs-list">' + docsReq + '</div></div>'
+        : '') +
 
-      <div class="detail-card">
-        <h3>🎙️ Call Summary</h3>
-        <div class="transcript-box">${escHtml(transcriptText)}</div>
-      </div>
-    `;
+      '<div class="ds">' +
+        '<div class="ds-label">Call Transcript</div>' +
+        '<div class="transcript-box">' + escHtml(transcriptText) + '</div>' +
+      '</div>';
   }
 
+  /* ── BUILD DOC CONTENT (preserved exactly) ──────────────────── */
   function buildDocContent(template) {
     const fields = template.fields || {};
     if (Object.keys(fields).length === 0) {
-      return `<div class="doc-box">${escHtml(template.title || 'Document')}</div>`;
+      return '<div class="doc-box">' + escHtml(template.title || 'Document') + '</div>';
     }
 
     const type = template.document_type || '';
@@ -722,51 +1170,124 @@ ${escHtml(fields.phone || '')}`;
 
     } else {
       // Generic fallback
-      docText = Object.entries(fields).map(([k, v]) =>
-        `${k.replace(/_/g,' ').toUpperCase()}: ${Array.isArray(v) ? v.join(', ') : v}`
-      ).join('\n');
+      docText = Object.entries(fields).map(function ([k, v]) {
+        return k.replace(/_/g, ' ').toUpperCase() + ': ' + (Array.isArray(v) ? v.join(', ') : v);
+      }).join('\n');
     }
 
-    return `<div class="doc-box">${docText}</div>`;
+    return '<div class="doc-box">' + docText + '</div>';
   }
 
-  function shortTitle(str) {
-    if (!str) return 'Document';
-    // Take just "Document 1: ..." -> "Legal Notice" type short label
-    const match = str.match(/Document \d+: (.+)/);
-    if (match) return match[1].substring(0, 30) + (match[1].length > 30 ? '…' : '');
-    return str.substring(0, 30);
-  }
-
-  window.switchTab = function(idx) {
-    document.querySelectorAll('.doc-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-    document.querySelectorAll('.doc-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  /* ── TAB SWITCHER ───────────────────────────────────────────── */
+  window.switchTab = function (idx) {
+    document.querySelectorAll('.doc-tab').forEach(function (t, i) {
+      t.classList.toggle('active', i === idx);
+    });
+    document.querySelectorAll('.doc-panel').forEach(function (p, i) {
+      p.classList.toggle('active', i === idx);
+    });
   };
 
+  /* ── UPDATE STATUS (PATCH /cases/:id/status) ────────────────── */
   async function updateStatus(caseId, newStatus) {
     try {
-      const res = await fetch(`/cases/${caseId}/status`, {
-        method: 'PATCH',
+      const res = await fetch('/cases/' + caseId + '/status', {
+        method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body:    JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error('Failed');
-      showToast(`✅ Status updated to "${newStatus}"`);
+      showToast('Status updated to "' + (STATUS_LABELS[newStatus] || newStatus) + '"');
       await loadCases();
       await loadDetail(caseId);
     } catch (e) {
-      showToast('⚠️ Could not update status');
+      showToast('Could not update status');
     }
   }
 
+  /* ── CITIZEN LOOKUP ─────────────────────────────────────────── */
+  const CITIZEN_PIN = 'NYAY2026';
+
+  async function lookupCase() {
+    const phone = document.getElementById('c-phone').value.trim();
+    const pin   = document.getElementById('c-pin').value.trim();
+    const errEl = document.getElementById('c-err');
+    const resEl = document.getElementById('c-result');
+
+    errEl.style.display = 'none';
+    resEl.innerHTML     = '';
+
+    if (!phone || !pin) {
+      errEl.textContent   = 'Please enter both phone number and PIN.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    if (pin !== CITIZEN_PIN) {
+      errEl.textContent   = 'Invalid PIN. Please contact your NyayOS representative.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      const res   = await fetch('/cases');
+      const cases = await res.json();
+      const norm  = phone.replace(/\D/g, '');
+      const found = cases.find(function (c) {
+        return c.phone && c.phone.replace(/\D/g, '') === norm;
+      });
+
+      if (!found) {
+        resEl.innerHTML =
+          '<div style="font-family:var(--mono);font-size:12px;color:#AAA;' +
+          'margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">' +
+          'No case found for this phone number.</div>';
+        return;
+      }
+
+      resEl.innerHTML =
+        '<div class="citizen-result">' +
+          '<hr class="citizen-result-rule"/>' +
+          '<div class="citizen-status-line">Your ' +
+            (ISSUE_LABELS[found.issue_type] || found.issue_type) +
+            ' case is currently: ' +
+            (STATUS_LABELS[found.status] || found.status) +
+          '</div>' +
+          '<div style="margin-bottom:20px;">' +
+            '<div class="section-lbl">Next Steps Directive</div>' +
+            '<div class="next-step">' +
+              escHtml(found.next_step || 'Please contact your NyayOS representative for next steps.') +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-bottom:20px;">' +
+            '<div class="section-lbl">Call Transcript</div>' +
+            '<div class="transcript-box">' +
+              escHtml(found.transcript_summary || found.transcript || 'No transcript available.') +
+            '</div>' +
+          '</div>' +
+          '<div class="citizen-note">For updates, call NyayOS at your registered number.</div>' +
+        '</div>';
+
+    } catch (e) {
+      errEl.textContent   = 'Could not retrieve case information. Please try again.';
+      errEl.style.display = 'block';
+    }
+  }
+
+  /* Allow Enter key to submit in citizen lookup */
+  document.getElementById('c-pin').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') lookupCase();
+  });
+
+  /* ── UTILITIES ──────────────────────────────────────────────── */
   function timeAgo(isoStr) {
     const diff = Date.now() - new Date(isoStr);
     const mins = Math.floor(diff / 60000);
-    if (mins < 2) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 2)  return 'just now';
+    if (mins < 60) return mins + 'm ago';
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
+    if (hrs < 24)  return hrs + 'h ago';
+    return Math.floor(hrs / 24) + 'd ago';
   }
 
   function formatDate(isoStr) {
@@ -777,12 +1298,13 @@ ${escHtml(fields.phone || '')}`;
 
   function escHtml(str) {
     return String(str)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/\n/g,'<br>');
+      .replace(/&/g,  '&amp;')
+      .replace(/</g,  '&lt;')
+      .replace(/>/g,  '&gt;')
+      .replace(/\n/g, '<br>');
   }
 
+  /* ── INIT ───────────────────────────────────────────────────── */
   loadCases();
   setInterval(loadCases, 30000);
 </script>
