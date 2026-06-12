@@ -1193,12 +1193,16 @@
     var ngo      = document.getElementById('view-ngo');
     var citizen  = document.getElementById('view-citizen');
     var carousel = document.getElementById('main-carousel');
+    var masthead = document.querySelector('.masthead');
+    var footer   = document.querySelector('.site-footer');
+    var isHome   = v === 'home';
 
-    landing.style.display  = v === 'home'    ? 'flex' : 'none';
-    ngo.style.display      = v === 'ngo'     ? 'flex' : 'none';
-    citizen.style.display  = v === 'citizen' ? 'flex' : 'none';
-    /* hide carousel on sub-pages so content has full height */
-    carousel.style.display = v === 'home'    ? 'block' : 'none';
+    landing.style.display  = isHome           ? 'flex'  : 'none';
+    ngo.style.display      = v === 'ngo'      ? 'flex'  : 'none';
+    citizen.style.display  = v === 'citizen'  ? 'flex'  : 'none';
+    carousel.style.display = isHome           ? 'block' : 'none';
+    masthead.style.display = isHome           ? ''      : 'none';
+    footer.style.display   = isHome           ? ''      : 'none';
 
     var target = v === 'ngo' ? ngo : v === 'citizen' ? citizen : landing;
     target.classList.remove('page-enter');
