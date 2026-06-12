@@ -503,13 +503,11 @@
   }
 
   function buildDocContent(template) {
-    // Build a readable document from the template fields
     const fields = template.fields || {};
     if (Object.keys(fields).length === 0) {
       return `<div class="doc-box">${escHtml(template.title || 'Document')}</div>`;
     }
 
-    // Generate formatted document text from fields
     const type = template.document_type || '';
     let docText = '';
 
@@ -535,6 +533,7 @@ Yours faithfully,
 ${escHtml(fields.employee_name || '')}
 ${escHtml(fields.phone || '')}
 ${escHtml(fields.employee_address || '')}`;
+
     } else if (type === 'labour_complaint') {
       docText = `To,
 The Labour Officer / Labour Commissioner
@@ -557,8 +556,172 @@ I request your kind intervention to direct my employer to pay the pending wages 
 Yours faithfully,
 ${escHtml(fields.employee_name || '')}
 ${escHtml(fields.phone || '')}`;
+
+    } else if (type === 'complaint_to_sp') {
+      docText = `To,
+The Superintendent of Police / DCP
+[Jurisdiction District]
+
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Sub: Complaint regarding refusal to register FIR at ${escHtml(fields.police_station_name || '')}
+
+Respected Sir/Madam,
+
+I, ${escHtml(fields.caller_name || '')}, residing at ${escHtml(fields.location || '')}, contact: ${escHtml(fields.phone || '')}, write to bring to your notice that on ${escHtml(fields.date_of_visit || '')}, I visited ${escHtml(fields.police_station_name || '')}, located at ${escHtml(fields.police_station_address || '')}, to file a complaint regarding ${escHtml(fields.incident_type || '')} that occurred on ${escHtml(fields.incident_date || '')} at ${escHtml(fields.incident_location || '')}.
+
+The accused person(s): ${escHtml(fields.accused_details || '')}.
+
+The officer I spoke to (${escHtml(fields.officer_spoken_to || '')}) refused to register my FIR. Reason given: ${escHtml(fields.refusal_reason || 'none stated')}.
+
+I have the following supporting documents: ${escHtml(fields.proof_list || '')}.
+
+I request your kind intervention to direct the concerned police station to register my FIR immediately under Section 154 CrPC.
+
+Yours faithfully,
+${escHtml(fields.caller_name || '')}
+${escHtml(fields.phone || '')}
+${escHtml(fields.location || '')}`;
+
+    } else if (type === 'magistrate_application') {
+      docText = `To,
+The Hon'ble Judicial Magistrate
+[Jurisdiction Court]
+
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Sub: Application under Section 156(3) CrPC for directing registration of FIR
+
+Respected Sir/Madam,
+
+I, ${escHtml(fields.caller_name || '')}, residing at ${escHtml(fields.location || '')}, contact: ${escHtml(fields.phone || '')}, respectfully submit that:
+
+1. An incident of ${escHtml(fields.incident_type || '')} occurred on ${escHtml(fields.incident_date || '')}.
+2. The accused: ${escHtml(fields.accused_details || '')}.
+3. I approached ${escHtml(fields.police_station_name || '')} to file an FIR but was refused.
+4. Reason for refusal: ${escHtml(fields.refusal_reason || 'none stated')}.
+5. Written complaint submitted: ${escHtml(fields.written_complaint_submitted || '')}.
+6. Senior officer approached: ${escHtml(fields.senior_officer_approached || 'no')}.
+
+Supporting documents: ${escHtml(fields.proof_list || '')}.
+
+I humbly pray that this Hon'ble Court may direct the concerned police station to register my FIR and investigate the matter.
+
+Yours faithfully,
+${escHtml(fields.caller_name || '')}
+${escHtml(fields.phone || '')}`;
+
+    } else if (type === 'legal_notice_to_landlord') {
+      docText = `To,
+${escHtml(fields.landlord_name || 'The Landlord')}
+${escHtml(fields.landlord_address || '')}
+
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Sub: Legal Notice demanding return of security deposit
+
+Sir/Madam,
+
+I, ${escHtml(fields.caller_name || '')}, formerly a tenant at ${escHtml(fields.property_address || '')}, write to demand the return of my security deposit.
+
+I paid a security deposit of ${escHtml(fields.deposit_amount || '')} via ${escHtml(fields.payment_mode || '')} on ${escHtml(fields.deposit_date || '')}. I vacated the property on ${escHtml(fields.vacating_date || '')} after giving proper notice (${escHtml(fields.notice_given || '')}) and handing over keys (${escHtml(fields.keys_handed_over || '')}).
+
+Despite vacating in good condition, you have refused to return the deposit. Reason given: ${escHtml(fields.refusal_reason || 'none stated')}.
+
+Supporting documents available: ${escHtml(fields.proof_list || '')}.
+
+You are hereby called upon to return the deposit of ${escHtml(fields.deposit_amount || '')} within ${escHtml((fields.deadline || '15 days').replace(' days',''))} days, failing which I will approach the Rent Authority / Consumer Forum / Civil Court for recovery with interest and compensation.
+
+Yours faithfully,
+${escHtml(fields.caller_name || '')}
+${escHtml(fields.phone || '')}
+${escHtml(fields.location || '')}`;
+
+    } else if (type === 'rent_authority_complaint') {
+      docText = `To,
+The Rent Authority / Consumer Forum
+[Jurisdiction Office]
+
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Sub: Complaint for recovery of withheld security deposit from ${escHtml(fields.landlord_name || '')}
+
+Respected Sir/Madam,
+
+I, ${escHtml(fields.caller_name || '')}, residing at ${escHtml(fields.location || '')}, contact: ${escHtml(fields.phone || '')}, submit this complaint against my former landlord ${escHtml(fields.landlord_name || '')}, residing at ${escHtml(fields.landlord_address || '')}.
+
+I was a tenant at ${escHtml(fields.property_address || '')} and paid a security deposit of ${escHtml(fields.deposit_amount || '')}. I vacated on ${escHtml(fields.vacating_date || '')} but my landlord has refused to return the deposit. Reason given: ${escHtml(fields.refusal_reason || 'none stated')}.
+
+Written demand submitted: ${escHtml(fields.written_demand_submitted || '')}. Authority approached earlier: ${escHtml(fields.authority_approached || 'none')}.
+
+Supporting documents: ${escHtml(fields.proof_list || '')}.
+
+I request appropriate action and direction to the landlord to return the deposit with interest.
+
+Yours faithfully,
+${escHtml(fields.caller_name || '')}
+${escHtml(fields.phone || '')}`;
+
+    } else if (type === 'grievance_application') {
+      docText = `To,
+The Grievance Officer
+${escHtml(fields.authority_name || '[Department/Authority]')}
+
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Sub: Grievance Application regarding ${escHtml(fields.issue_category || 'pension issue')}
+
+Respected Sir/Madam,
+
+I, ${escHtml(fields.caller_name || '')}, residing at ${escHtml(fields.location || '')}, contact: ${escHtml(fields.phone || '')}, write to submit the following grievance.
+
+Reference Number / PPO / EPFO Number: ${escHtml(fields.reference_number || 'Not available')}.
+Application / Sanction Date: ${escHtml(fields.application_date || '')}.
+
+Nature of Problem: ${escHtml(fields.problem_description || '')}.
+Problem exists since: ${escHtml(fields.problem_start_date || '')}.
+
+I contacted the department (${escHtml(fields.department_contacted || '')}). Response received: ${escHtml(fields.department_response || 'none')}.
+
+Impact suffered: ${escHtml(fields.impact_suffered || '')}.
+
+Supporting documents: ${escHtml(fields.proof_list || '')}.
+
+I request immediate resolution of this grievance.
+
+Yours faithfully,
+${escHtml(fields.caller_name || '')}
+${escHtml(fields.phone || '')}`;
+
+    } else if (type === 'escalation_letter') {
+      docText = `To,
+The Higher Authority / Grievance Redressal Officer
+${escHtml(fields.authority_name || '[Department/Authority]')}
+
+Date: ${new Date().toLocaleDateString('en-IN')}
+
+Sub: Escalation of unresolved grievance — ${escHtml(fields.reference_number || '')}
+
+Respected Sir/Madam,
+
+I, ${escHtml(fields.caller_name || '')}, residing at ${escHtml(fields.location || '')}, contact: ${escHtml(fields.phone || '')}, wish to escalate my unresolved grievance regarding ${escHtml(fields.problem_description || '')}.
+
+Written grievance submitted: ${escHtml(fields.written_grievance_submitted || '')}. Written reply received: ${escHtml(fields.written_reply_received || 'none')}.
+
+Higher authority / portal approached earlier: ${escHtml(fields.authority_approached || 'none')}.
+
+Impact suffered: ${escHtml(fields.impact_suffered || '')}.
+
+Supporting documents: ${escHtml(fields.proof_list || '')}.
+
+I request urgent intervention and resolution.
+
+Yours faithfully,
+${escHtml(fields.caller_name || '')}
+${escHtml(fields.phone || '')}`;
+
     } else {
-      // Generic — just show all fields
+      // Generic fallback
       docText = Object.entries(fields).map(([k, v]) =>
         `${k.replace(/_/g,' ').toUpperCase()}: ${Array.isArray(v) ? v.join(', ') : v}`
       ).join('\n');

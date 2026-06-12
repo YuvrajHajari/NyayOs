@@ -16,11 +16,144 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-function buildDocumentTemplates(f) {
+function buildDocumentTemplates(f, issue_type) {
   const proofList = typeof f.proof_available === 'string'
     ? f.proof_available
     : Array.isArray(f.proof_available) ? f.proof_available.join(', ') : '';
 
+  if (issue_type === 'fir_refusal') {
+    return [
+      {
+        document_type: 'complaint_to_sp',
+        title: 'Complaint to Superintendent of Police regarding FIR refusal',
+        template_name: 'Document 1: Written Complaint to SP / DCP',
+        fields: {
+          caller_name: f.caller_name || '',
+          location: f.location || '',
+          phone: f.phone || '',
+          police_station_name: f.police_station_name || '',
+          police_station_address: f.police_station_address || '',
+          officer_spoken_to: f.officer_spoken_to || '',
+          incident_type: f.incident_type || '',
+          incident_date: f.incident_date || '',
+          incident_location: f.incident_location || '',
+          accused_details: f.accused_details || '',
+          date_of_visit: f.date_of_visit || '',
+          refusal_reason: f.refusal_reason || '',
+          proof_list: proofList,
+        }
+      },
+      {
+        document_type: 'magistrate_application',
+        title: 'Application to Magistrate under CrPC Section 156(3)',
+        template_name: 'Document 2: Magistrate Court Application',
+        fields: {
+          caller_name: f.caller_name || '',
+          location: f.location || '',
+          phone: f.phone || '',
+          police_station_name: f.police_station_name || '',
+          incident_type: f.incident_type || '',
+          incident_date: f.incident_date || '',
+          accused_details: f.accused_details || '',
+          refusal_reason: f.refusal_reason || '',
+          written_complaint_submitted: f.written_complaint_submitted || '',
+          senior_officer_approached: f.senior_officer_approached || '',
+          proof_list: proofList,
+        }
+      }
+    ];
+  }
+
+  if (issue_type === 'deposit_withheld') {
+    return [
+      {
+        document_type: 'legal_notice_to_landlord',
+        title: 'Legal Notice to Landlord for Return of Security Deposit',
+        template_name: 'Document 1: Legal Notice to Landlord',
+        fields: {
+          caller_name: f.caller_name || '',
+          location: f.location || '',
+          phone: f.phone || '',
+          landlord_name: f.landlord_name || '',
+          landlord_address: f.landlord_address || '',
+          property_address: f.property_address || '',
+          deposit_amount: f.deposit_amount || '',
+          payment_mode: f.payment_mode || '',
+          deposit_date: f.deposit_date || '',
+          vacating_date: f.vacating_date || '',
+          notice_given: f.notice_given || '',
+          keys_handed_over: f.keys_handed_over || '',
+          refusal_reason: f.refusal_reason || '',
+          proof_list: proofList,
+          deadline: '15 days',
+        }
+      },
+      {
+        document_type: 'rent_authority_complaint',
+        title: 'Complaint to Rent Authority / Consumer Forum',
+        template_name: 'Document 2: Rent Authority / Consumer Forum Complaint',
+        fields: {
+          caller_name: f.caller_name || '',
+          location: f.location || '',
+          phone: f.phone || '',
+          landlord_name: f.landlord_name || '',
+          landlord_address: f.landlord_address || '',
+          property_address: f.property_address || '',
+          deposit_amount: f.deposit_amount || '',
+          vacating_date: f.vacating_date || '',
+          refusal_reason: f.refusal_reason || '',
+          written_demand_submitted: f.written_demand_submitted || '',
+          authority_approached: f.authority_approached || '',
+          proof_list: proofList,
+        }
+      }
+    ];
+  }
+
+  if (issue_type === 'pension_delay') {
+    return [
+      {
+        document_type: 'grievance_application',
+        title: 'Grievance Application to Pension Authority / Department',
+        template_name: 'Document 1: Grievance Application',
+        fields: {
+          caller_name: f.caller_name || '',
+          location: f.location || '',
+          phone: f.phone || '',
+          authority_name: f.authority_name || '',
+          issue_category: f.issue_category || '',
+          reference_number: f.reference_number || '',
+          application_date: f.application_date || '',
+          problem_description: f.problem_description || '',
+          problem_start_date: f.problem_start_date || '',
+          department_contacted: f.department_contacted || '',
+          department_response: f.department_response || '',
+          impact_suffered: f.impact_suffered || '',
+          proof_list: proofList,
+        }
+      },
+      {
+        document_type: 'escalation_letter',
+        title: 'Escalation Letter to Higher Authority / Grievance Portal',
+        template_name: 'Document 2: Escalation Letter',
+        fields: {
+          caller_name: f.caller_name || '',
+          location: f.location || '',
+          phone: f.phone || '',
+          authority_name: f.authority_name || '',
+          reference_number: f.reference_number || '',
+          problem_description: f.problem_description || '',
+          written_grievance_submitted: f.written_grievance_submitted || '',
+          written_reply_received: f.written_reply_received || '',
+          authority_approached: f.authority_approached || '',
+          impact_suffered: f.impact_suffered || '',
+          proof_list: proofList,
+        }
+      }
+    ];
+  }
+
+  // Default: unpaid_salary
   return [
     {
       document_type: 'salary_demand_legal_notice_style',
@@ -110,7 +243,7 @@ app.post('/cases', async (req, res) => {
         'ID card',
         'work logs'
       ],
-      document_templates: buildDocumentTemplates({ ...b, ...facts }),
+      document_templates: buildDocumentTemplates({ ...b, ...facts }, b.issue_type || 'unpaid_salary'),
       status: b.status || 'draft_generated',
       urgency: b.urgency || 'medium',
       next_step: b.next_step || 'Submit complaint to Labour Commissioner',
