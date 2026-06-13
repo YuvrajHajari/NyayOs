@@ -940,14 +940,198 @@
       letter-spacing: 0.5px;
     }
     .footer-links span { margin: 0 6px; }
+
+    /* ── GLOBAL PAGE WATERMARK ───────────────────────────────── */
+    .page-watermark {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .page-watermark svg {
+      width: min(88vh, 88vw);
+      max-width: 680px;
+      opacity: 0.044;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+
+    /* ── MASTHEAD LOGO ICONS ─────────────────────────────────── */
+    .masthead-brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 4px;
+    }
+    .masthead-brand-row .masthead-brand {
+      margin-bottom: 0;
+    }
+    .masthead-logo {
+      width: 46px;
+      height: 46px;
+      color: var(--ink);
+      opacity: 0.70;
+      flex-shrink: 0;
+    }
+
+    /* ── MASTHEAD ORNAMENT RULE ──────────────────────────────── */
+    .masthead-orn-rule {
+      display: flex;
+      align-items: center;
+      margin: 5px 48px 6px;
+    }
+    .masthead-orn-line {
+      flex: 1;
+      height: 1px;
+      background: var(--ink);
+    }
+    .masthead-orn-diamond {
+      width: 5px;
+      height: 5px;
+      background: var(--ink);
+      transform: rotate(45deg);
+      margin: 0 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── MASTHEAD DOUBLE CROWN ───────────────────────────────── */
+    .masthead-crown-rule {
+      height: 7px;
+      border-top: 2.5px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+      margin-bottom: 14px;
+    }
   </style>
 </head>
 <body>
 
+<!-- ── GLOBAL WATERMARK (behind all content) ──────────────── -->
+<div class="page-watermark" aria-hidden="true">
+  <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Outer decorative rings -->
+    <circle cx="250" cy="250" r="243" stroke="currentColor" stroke-width="2"/>
+    <circle cx="250" cy="250" r="235" stroke="currentColor" stroke-width="0.6"/>
+    <circle cx="250" cy="250" r="227" stroke="currentColor" stroke-width="1.2"/>
+    <!-- Cardinal tick marks on outer ring -->
+    <line x1="250" y1="7"  x2="250" y2="24" stroke="currentColor" stroke-width="2.2"/>
+    <line x1="243" y1="15" x2="257" y2="15" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="250" y1="493" x2="250" y2="476" stroke="currentColor" stroke-width="2.2"/>
+    <line x1="243" y1="485" x2="257" y2="485" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="7"   y1="250" x2="24"  y2="250" stroke="currentColor" stroke-width="2.2"/>
+    <line x1="15"  y1="243" x2="15"  y2="257" stroke="currentColor" stroke-width="1.2"/>
+    <line x1="493" y1="250" x2="476" y2="250" stroke="currentColor" stroke-width="2.2"/>
+    <line x1="485" y1="243" x2="485" y2="257" stroke="currentColor" stroke-width="1.2"/>
+    <!-- Diagonal tick marks -->
+    <line x1="78"  y1="78"  x2="90"  y2="90"  stroke="currentColor" stroke-width="1.3"/>
+    <line x1="422" y1="78"  x2="410" y2="90"  stroke="currentColor" stroke-width="1.3"/>
+    <line x1="78"  y1="422" x2="90"  y2="410" stroke="currentColor" stroke-width="1.3"/>
+    <line x1="422" y1="422" x2="410" y2="410" stroke="currentColor" stroke-width="1.3"/>
+    <!-- Inner dashed ring -->
+    <circle cx="250" cy="250" r="178" stroke="currentColor" stroke-width="0.9" stroke-dasharray="5 9"/>
+    <!-- ── SCALES OF JUSTICE ── -->
+    <!-- Central pillar -->
+    <line x1="250" y1="104" x2="250" y2="388" stroke="currentColor" stroke-width="4.5"/>
+    <!-- Top finial circle -->
+    <circle cx="250" cy="98" r="10" fill="currentColor"/>
+    <!-- Finial cross-bar -->
+    <line x1="240" y1="98" x2="260" y2="98" stroke="currentColor" stroke-width="1.5"/>
+    <!-- Main balance beam -->
+    <line x1="128" y1="168" x2="372" y2="168" stroke="currentColor" stroke-width="4"/>
+    <!-- Beam centre pivot -->
+    <circle cx="250" cy="168" r="8" fill="currentColor"/>
+    <!-- Left suspension chains -->
+    <line x1="128" y1="170" x2="96"  y2="258" stroke="currentColor" stroke-width="2"/>
+    <line x1="128" y1="170" x2="160" y2="258" stroke="currentColor" stroke-width="2"/>
+    <!-- Left pan -->
+    <path d="M 90 258 Q 128 308 166 258" stroke="currentColor" stroke-width="2.8" fill="none"/>
+    <line x1="90" y1="258" x2="166" y2="258" stroke="currentColor" stroke-width="2.8"/>
+    <!-- Left pan end caps -->
+    <circle cx="90"  cy="258" r="4" fill="currentColor"/>
+    <circle cx="166" cy="258" r="4" fill="currentColor"/>
+    <!-- Right suspension chains -->
+    <line x1="372" y1="170" x2="340" y2="258" stroke="currentColor" stroke-width="2"/>
+    <line x1="372" y1="170" x2="404" y2="258" stroke="currentColor" stroke-width="2"/>
+    <!-- Right pan -->
+    <path d="M 334 258 Q 372 308 410 258" stroke="currentColor" stroke-width="2.8" fill="none"/>
+    <line x1="334" y1="258" x2="410" y2="258" stroke="currentColor" stroke-width="2.8"/>
+    <!-- Right pan end caps -->
+    <circle cx="334" cy="258" r="4" fill="currentColor"/>
+    <circle cx="410" cy="258" r="4" fill="currentColor"/>
+    <!-- Beam end diamonds -->
+    <rect x="120" y="160" width="16" height="16" transform="rotate(45 128 168)" fill="currentColor"/>
+    <rect x="364" y="160" width="16" height="16" transform="rotate(45 372 168)" fill="currentColor"/>
+    <!-- Base footing -->
+    <line x1="208" y1="388" x2="292" y2="388" stroke="currentColor" stroke-width="4.5"/>
+    <line x1="198" y1="398" x2="302" y2="398" stroke="currentColor" stroke-width="2.8"/>
+    <line x1="212" y1="406" x2="288" y2="406" stroke="currentColor" stroke-width="1.8"/>
+    <!-- Decorative arch above beam -->
+    <path d="M 205 138 Q 250 108 295 138" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <!-- Decorative arch below base -->
+    <path d="M 212 418 Q 250 432 288 418" stroke="currentColor" stroke-width="1" fill="none" opacity="0.6"/>
+    <!-- Four inner leaf ornaments beside scales -->
+    <ellipse cx="96"  cy="168" rx="14" ry="7" stroke="currentColor" stroke-width="1" fill="none" opacity="0.55" transform="rotate(-30 96 168)"/>
+    <ellipse cx="404" cy="168" rx="14" ry="7" stroke="currentColor" stroke-width="1" fill="none" opacity="0.55" transform="rotate(30 404 168)"/>
+  </svg>
+</div>
+
+
 <div class="masthead">
-  <div class="masthead-brand">The Nyay</div>
+  <div class="masthead-crown-rule"></div>
+  <div class="masthead-brand-row">
+    <!-- Left scales of justice publisher mark -->
+    <svg class="masthead-logo" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="32" r="28" stroke="currentColor" stroke-width="1"/>
+      <line x1="30" y1="10" x2="30" y2="57" stroke="currentColor" stroke-width="2"/>
+      <circle cx="30" cy="8" r="3.5" fill="currentColor"/>
+      <line x1="14" y1="22" x2="46" y2="22" stroke="currentColor" stroke-width="1.8"/>
+      <circle cx="30" cy="22" r="3" fill="currentColor"/>
+      <line x1="14" y1="23" x2="7"  y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="14" y1="23" x2="21" y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <path d="M 4 40 Q 14 51 24 40" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <line x1="4"  y1="40" x2="24" y2="40" stroke="currentColor" stroke-width="1.8"/>
+      <line x1="46" y1="23" x2="39" y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="46" y1="23" x2="53" y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <path d="M 36 40 Q 46 51 56 40" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <line x1="36" y1="40" x2="56" y2="40" stroke="currentColor" stroke-width="1.8"/>
+      <line x1="22" y1="57" x2="38" y2="57" stroke="currentColor" stroke-width="2.2"/>
+      <line x1="20" y1="62" x2="40" y2="62" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <div class="masthead-brand">The Nyay</div>
+    <!-- Right scales of justice publisher mark -->
+    <svg class="masthead-logo" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="32" r="28" stroke="currentColor" stroke-width="1"/>
+      <line x1="30" y1="10" x2="30" y2="57" stroke="currentColor" stroke-width="2"/>
+      <circle cx="30" cy="8" r="3.5" fill="currentColor"/>
+      <line x1="14" y1="22" x2="46" y2="22" stroke="currentColor" stroke-width="1.8"/>
+      <circle cx="30" cy="22" r="3" fill="currentColor"/>
+      <line x1="14" y1="23" x2="7"  y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="14" y1="23" x2="21" y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <path d="M 4 40 Q 14 51 24 40" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <line x1="4"  y1="40" x2="24" y2="40" stroke="currentColor" stroke-width="1.8"/>
+      <line x1="46" y1="23" x2="39" y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="46" y1="23" x2="53" y2="40" stroke="currentColor" stroke-width="1.2"/>
+      <path d="M 36 40 Q 46 51 56 40" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <line x1="36" y1="40" x2="56" y2="40" stroke="currentColor" stroke-width="1.8"/>
+      <line x1="22" y1="57" x2="38" y2="57" stroke="currentColor" stroke-width="2.2"/>
+      <line x1="20" y1="62" x2="40" y2="62" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+  </div>
   <div class="masthead-tagline">Where the law meets the people who need it most.</div>
-  <hr class="masthead-rule"/>
+  <div class="masthead-orn-rule">
+    <div class="masthead-orn-line"></div>
+    <div class="masthead-orn-diamond"></div>
+    <div class="masthead-orn-line"></div>
+    <div class="masthead-orn-diamond"></div>
+    <div class="masthead-orn-line"></div>
+    <div class="masthead-orn-diamond"></div>
+    <div class="masthead-orn-line"></div>
+  </div>
   <div class="masthead-meta">Bangalore, India &nbsp;&nbsp;|&nbsp;&nbsp; Legal Infrastructure for Citizen Rights &nbsp;&nbsp;|&nbsp;&nbsp; Vol.&nbsp;I</div>
 </div>
 
