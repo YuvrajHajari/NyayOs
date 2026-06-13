@@ -2341,23 +2341,37 @@ ${escHtml(fields.phone || '')}`;
   };
 
   /* ── EXPORT: EMAIL TO LAWYER (mailto) ───────────────────────── */
-  window.emailDocuments = function () {
+  /* ── EXPORT: EMAIL TO LAWYER (via n8n webhook) ───────────────── */
+  window.emailDocuments = async function () {
     var caseId  = activeId || 'case';
     var docText = getDocumentText();
     if (!docText.trim()) { showToast('No documents to email.'); return; }
-    var subject = 'NyayOS Legal Documents \u2014 Case ' + caseId;
-    var body    =
-      'Dear Advocate,\n\n' +
-      'Please find the generated legal documents for Case ' + caseId + ' below.\n\n' +
-      docText +
-      '\n\nRegards,\nNyayOS Team';
-    window.open(
-      'mailto:yuvrajhajari@gmail.com' +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body='    + encodeURIComponent(body)
-    );
+
     var dd = document.getElementById('export-dropdown');
     if (dd) dd.classList.remove('open');
+
+    showToast('Sending email...');
+
+    try {
+      var res = await fetch('https://akaashvp.app.n8n.cloud/webhook/98f67cf6-ff8b-43e9-aa4d-7d0b5fe78f94', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          case_id: caseId,
+          subject: 'NyayOS Legal Documents — Case ' + caseId,
+          body: 'Dear Advocate,\n\nPlease find the generated legal documents for Case ' + caseId + ' below.\n\n' + docText + '\n\nRegards,\nNyayOS Team',
+          document_text: docText,
+        }),
+      });
+
+      if (res.ok) {
+        showToast('✓ Email sent to lawyer successfully.');
+      } else {
+        showToast('Email failed. Please try again.');
+      }
+    } catch (e) {
+      showToast('Could not reach email service.');
+    }
   };
 
   /* ── INIT ───────────────────────────────────────────────────── */
