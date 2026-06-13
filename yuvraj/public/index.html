@@ -1128,6 +1128,180 @@
     .next-step {
       border-left-width: 5px;
     }
+
+    /* ── CAROUSEL PROGRESS BAR ────────────────────────────────── */
+    .carousel-wrap {
+      position: relative;
+    }
+    .carousel-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--crimson);
+      width: 0%;
+      z-index: 10;
+    }
+
+    /* ── CASE CARD PIN & ARROW & BADGE COLORS ──────────────────── */
+    .case-card {
+      position: relative;
+      padding-right: 36px !important;
+    }
+    .case-card::after {
+      content: "→";
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%) translateX(10px);
+      font-size: 20px;
+      font-family: var(--serif);
+      color: var(--crimson);
+      font-weight: 700;
+      opacity: 0;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      pointer-events: none;
+    }
+    .case-card.active::after {
+      transform: translateY(-50%) translateX(0);
+      opacity: 1;
+    }
+
+    .cc-issue-badge.ib-unpaid_salary {
+      border-color: rgba(46, 91, 136, 0.4);
+      background-color: rgba(46, 91, 136, 0.08);
+      color: #2e5b88;
+    }
+    .cc-issue-badge.ib-deposit_withheld,
+    .cc-issue-badge.ib-refused_deposit {
+      border-color: rgba(196, 124, 0, 0.4);
+      background-color: rgba(196, 124, 0, 0.08);
+      color: #b37000;
+    }
+    .cc-issue-badge.ib-pension_delay {
+      border-color: rgba(46, 117, 89, 0.4);
+      background-color: rgba(46, 117, 89, 0.08);
+      color: #2e7559;
+    }
+    .cc-issue-badge.ib-fir_refusal {
+      border-color: rgba(166, 25, 46, 0.4);
+      background-color: rgba(166, 25, 46, 0.08);
+      color: var(--crimson);
+    }
+
+    /* ── NGO STATS BAR ────────────────────────────────────────── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border);
+      background: var(--canvas);
+      flex-shrink: 0;
+    }
+    .stat-card {
+      padding: 12px 18px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-card:last-child {
+      border-right: none;
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    .stat-val {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .stat-high .stat-val {
+      color: var(--crimson);
+    }
+    .stat-draft .stat-val {
+      color: var(--amber);
+    }
+    .stat-resolved .stat-val {
+      color: var(--green);
+    }
+
+    /* ── FILTER SEARCH INPUT ──────────────────────────────────── */
+    .filter-ribbon input {
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--canvas);
+      color: var(--ink);
+      width: 160px;
+    }
+    .filter-ribbon input:focus {
+      outline: 1px solid var(--ink);
+      border-color: var(--crimson);
+    }
+
+    /* ── LANDING LIVE COUNTER ─────────────────────────────────── */
+    .landing-live-counter {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--crimson);
+      margin-bottom: 24px;
+      padding: 6px 16px;
+      border: 1px double var(--crimson);
+      background: rgba(158, 42, 43, 0.03);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: bold;
+    }
+
+    /* ── RESOLVED STAMP ───────────────────────────────────────── */
+    .col-detail {
+      position: relative;
+    }
+    .resolved-stamp {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      border: 4px double var(--crimson);
+      color: var(--crimson);
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 900;
+      padding: 6px 16px;
+      text-transform: uppercase;
+      transform: rotate(-12deg);
+      opacity: 0.85;
+      border-radius: 4px;
+      pointer-events: none;
+      user-select: none;
+      z-index: 100;
+      background: var(--canvas);
+      letter-spacing: 2px;
+    }
+    .resolved-stamp.stamp-animate {
+      animation: stamp-slam 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+    }
+    @keyframes stamp-slam {
+      0% {
+        transform: rotate(-12deg) scale(3);
+        opacity: 0;
+      }
+      80% {
+        transform: rotate(-12deg) scale(0.95);
+        opacity: 0.9;
+      }
+      100% {
+        transform: rotate(-12deg) scale(1);
+        opacity: 0.85;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1306,9 +1480,13 @@
     </div>
   </div>
 
+  <div class="carousel-progress" id="carousel-bar"></div>
 </div>
 
 <div id="view-landing">
+  <div class="landing-live-counter" id="landing-live-counter" style="display: none;">
+    <span id="live-count-cases">0</span>&nbsp;citizens helped across&nbsp;<span id="live-count-issues">0</span>&nbsp;issue types
+  </div>
   <div class="landing-intro">Select your portal to continue</div>
   <div class="landing-buttons">
 
@@ -1404,7 +1582,28 @@
         <option value="followup_due">Follow-up Due</option>
         <option value="resolved">Resolved</option>
       </select>
+      <label style="margin-left: 20px;">Search</label>
+      <input type="text" id="search-input" placeholder="Type to search..." oninput="filterClientSide()"/>
       <span id="ribbon-count"></span>
+    </div>
+
+    <div class="stats-bar" id="ngo-stats-bar">
+      <div class="stat-card">
+        <div class="stat-label">Total Cases</div>
+        <div class="stat-val" id="stat-total">—</div>
+      </div>
+      <div class="stat-card stat-high">
+        <div class="stat-label">High Urgency</div>
+        <div class="stat-val" id="stat-high">—</div>
+      </div>
+      <div class="stat-card stat-draft">
+        <div class="stat-label">Drafts Ready</div>
+        <div class="stat-val" id="stat-draft">—</div>
+      </div>
+      <div class="stat-card stat-resolved">
+        <div class="stat-label">Resolved</div>
+        <div class="stat-val" id="stat-resolved">—</div>
+      </div>
     </div>
 
     <div class="workspace">
@@ -1567,10 +1766,21 @@
 
   /* ── CAROUSEL ───────────────────────────────────────────────── */
   let carouselIdx = 0;
+  function resetCarouselProgress() {
+    const bar = document.getElementById('carousel-bar');
+    if (!bar) return;
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    void bar.offsetWidth;
+    bar.style.transition = 'width 5000ms linear';
+    bar.style.width = '100%';
+  }
+  resetCarouselProgress();
   setInterval(function () {
     document.getElementById('ci-' + carouselIdx).classList.remove('active');
     carouselIdx = (carouselIdx + 1) % 4;
     document.getElementById('ci-' + carouselIdx).classList.add('active');
+    resetCarouselProgress();
   }, 5000);
 
   /* ── TOAST ──────────────────────────────────────────────────── */
@@ -1624,12 +1834,92 @@
     try {
       const res  = await fetch('/cases?' + params);
       allCases   = await res.json();
-      renderList(allCases);
+      filterClientSide();
+      updateStatsBar();
     } catch (e) {
       document.getElementById('case-list').innerHTML =
         '<div class="load-txt">Could not load cases. Is the server running?</div>';
     }
   }
+
+  /* ── FILTER CLIENT SIDE (SEARCH) ────────────────────────────── */
+  window.filterClientSide = function () {
+    const qInput = document.getElementById('search-input');
+    const q = qInput ? qInput.value.toLowerCase().trim() : '';
+    if (!q) {
+      renderList(allCases);
+      return;
+    }
+    const filtered = allCases.filter(function (c) {
+      const name = (c.caller_name || '').toLowerCase();
+      const summary = (c.summary || '').toLowerCase();
+      const location = (c.location || '').toLowerCase();
+      return name.includes(q) || summary.includes(q) || location.includes(q);
+    });
+    renderList(filtered);
+  };
+
+  /* ── UPDATE STATS BAR ───────────────────────────────────────── */
+  async function updateStatsBar() {
+    try {
+      const res = await fetch('/cases');
+      const cases = await res.json();
+      
+      const total = cases.length;
+      const high = cases.filter(c => c.urgency === 'high').length;
+      const draft = cases.filter(c => c.status === 'draft_generated').length;
+      const resolved = cases.filter(c => c.status === 'resolved').length;
+      
+      const elTotal = document.getElementById('stat-total');
+      const elHigh = document.getElementById('stat-high');
+      const elDraft = document.getElementById('stat-draft');
+      const elResolved = document.getElementById('stat-resolved');
+      
+      if (elTotal) elTotal.textContent = total;
+      if (elHigh) elHigh.textContent = high;
+      if (elDraft) elDraft.textContent = draft;
+      if (elResolved) elResolved.textContent = resolved;
+    } catch (e) {
+      console.error("Could not update stats", e);
+    }
+  }
+
+  /* ── COPY DOCUMENT TEXT ─────────────────────────────────────── */
+  window.copyDocumentText = function (e) {
+    if (e) e.stopPropagation();
+    var txt = getDocumentText();
+    if (!txt.trim()) {
+      showToast("No generated documents to copy!");
+      return;
+    }
+    navigator.clipboard.writeText(txt).then(function () {
+      showToast("Documents copied to clipboard! 📋");
+    }).catch(function (err) {
+      // Fallback
+      var textArea = document.createElement("textarea");
+      textArea.value = txt;
+      textArea.style.position = "fixed";
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.width = "2em";
+      textArea.style.height = "2em";
+      textArea.style.padding = "0";
+      textArea.style.border = "none";
+      textArea.style.outline = "none";
+      textArea.style.boxShadow = "none";
+      textArea.style.background = "transparent";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast("Documents copied to clipboard! 📋");
+      } catch (err) {
+        showToast("Failed to copy documents.");
+      }
+      document.body.removeChild(textArea);
+    });
+  };
 
   /* ── RENDER LIST ────────────────────────────────────────────── */
   function renderList(cases) {
@@ -1646,10 +1936,11 @@
       return '<div class="case-card' + (c.case_id === activeId ? ' active' : '') + '"' +
              ' data-urgency="' + (c.urgency || 'medium') + '"' +
              ' onclick="loadDetail(\'' + c.case_id + '\')">' +
-        '<div class="cc-issue-badge">' + (ISSUE_LABELS[c.issue_type] || c.issue_type) + '</div>' +
+        '<div class="cc-issue-badge ib-' + c.issue_type + '">' + (ISSUE_LABELS[c.issue_type] || c.issue_type) + '</div>' +
         '<div class="cc-name">'  + escHtml(c.caller_name) + '</div>' +
-        '<div class="cc-meta">'  + escHtml(c.location || '—') +
-                                   ' &nbsp;·&nbsp; ' + timeAgo(c.created_at) + '</div>' +
+        '<div class="cc-meta">' + 
+          (c.location ? '<svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:-1px; margin-right:3px; opacity:0.75;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>' + escHtml(c.location) : '—') +
+          ' &nbsp;·&nbsp; ' + timeAgo(c.created_at) + '</div>' +
         '<div class="cc-urgency-row">' + urgencyHtml(c.urgency) +
           '<span class="cc-status">' + (STATUS_LABELS[c.status] || c.status) + '</span></div>' +
         '<div class="cc-summary">' + escHtml(c.summary) + '</div>' +
@@ -1738,7 +2029,11 @@
 
     const transcriptText = c.transcript_summary || c.transcript || 'No transcript available.';
 
+    const isResolved = c.status === 'resolved';
+    const stampHtml = isResolved ? '<div class="resolved-stamp stamp-animate">RESOLVED</div>' : '';
+
     document.getElementById('detail').innerHTML =
+      stampHtml +
       '<div class="step-track">' + stepsHtml + '</div>' +
 
       '<div class="ds">' +
@@ -1774,7 +2069,11 @@
       '<div class="ds">' +
         '<div class="ds-label-row">' +
           '<div class="ds-label">Generated Documents</div>' +
-          '<div class="export-wrap">' +
+          '<div class="export-wrap" style="display: flex; gap: 8px;">' +
+            '<button class="export-btn" onclick="copyDocumentText(event)" title="Copy documents to clipboard">' +
+              '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 3px; display: inline-block; vertical-align: -1px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+              'Copy' +
+            '</button>' +
             '<button class="export-btn" onclick="toggleExport(event)">Export ▾</button>' +
             '<div class="export-dd" id="export-dropdown">' +
               '<button class="export-dd-item" onclick="exportPDF()">⭳ Download as PDF</button>' +
@@ -2374,8 +2673,49 @@ ${escHtml(fields.phone || '')}`;
     }
   };
 
+  /* ── LANDING LIVE COUNTER ANIMATION ─────────────────────────── */
+  async function initLandingCounter() {
+    try {
+      const res = await fetch('/cases');
+      const cases = await res.json();
+      
+      const targetCases = cases.length;
+      const targetIssues = new Set(cases.map(c => c.issue_type)).size;
+      
+      const el = document.getElementById('landing-live-counter');
+      if (!el) return;
+      el.style.display = 'inline-flex';
+      
+      animateNumber('live-count-cases', 0, targetCases, 1200);
+      animateNumber('live-count-issues', 0, targetIssues, 1000);
+    } catch (e) {
+      console.error("Failed to load landing counter", e);
+    }
+  }
+
+  function animateNumber(id, start, end, duration) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (start === end) {
+      el.textContent = end;
+      return;
+    }
+    const range = end - start;
+    let current = start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    const timer = setInterval(function () {
+      current += increment;
+      el.textContent = current;
+      if (current === end) {
+        clearInterval(timer);
+      }
+    }, Math.max(stepTime, 20));
+  }
+
   /* ── INIT ───────────────────────────────────────────────────── */
   /* loadCases() is deferred until NGO gate is passed */
+  initLandingCounter();
   setInterval(function () {
     var ws = document.getElementById('ngo-workspace');
     if (ws && ws.style.display !== 'none') loadCases();
