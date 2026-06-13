@@ -1007,6 +1007,127 @@
       border-bottom: 1px solid var(--ink);
       margin-bottom: 14px;
     }
+
+    /* ── CASE CARD URGENCY BORDERS ───────────────────────────── */
+    .case-card {
+      border-left: 3px solid var(--border);
+      transition: background 0.18s;
+    }
+    .case-card[data-urgency="high"]            { border-left-color: var(--crimson); }
+    .case-card[data-urgency="medium"]          { border-left-color: var(--amber);   }
+    .case-card[data-urgency="low"]             { border-left-color: var(--green);   }
+    .case-card.active[data-urgency="high"]     { border-left-color: var(--crimson); }
+    .case-card.active[data-urgency="medium"]   { border-left-color: var(--amber);   }
+    .case-card.active[data-urgency="low"]      { border-left-color: var(--green);   }
+    .cc-issue-badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 7.5px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border: 1px solid var(--border);
+      color: #999;
+      margin-bottom: 4px;
+    }
+    .col-list { background: #F9F6F1; }
+
+    /* ── SECTION LABEL – CRIMSON LEFT RULE ───────────────────────── */
+    .ds-label {
+      border-left: 2px solid var(--crimson);
+      padding-left: 7px;
+      color: #555;
+    }
+    .ds-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .ds-label-row .ds-label { margin-bottom: 0; }
+
+    /* ── EXPORT BUTTON & DROPDOWN ─────────────────────────────── */
+    .export-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .export-btn {
+      padding: 5px 13px;
+      background: var(--ink);
+      color: var(--canvas);
+      border: none;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.18s;
+    }
+    .export-btn:hover { background: var(--crimson); }
+    .export-dd {
+      display: none;
+      position: absolute;
+      top: calc(100% + 3px);
+      right: 0;
+      background: var(--canvas);
+      border: 1px solid var(--ink);
+      min-width: 220px;
+      z-index: 300;
+      box-shadow: 4px 6px 18px rgba(30,34,41,0.13);
+    }
+    .export-dd.open { display: block; }
+    .export-dd-item {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      text-align: left;
+      cursor: pointer;
+      color: var(--ink);
+      transition: background 0.14s;
+    }
+    .export-dd-item:last-child { border-bottom: none; }
+    .export-dd-item:hover { background: #EDE8DE; }
+    .export-dd-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+    .export-lawyer-tag {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      color: #AAA;
+      padding: 4px 16px 8px;
+      display: block;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── FACTS GRID ALTERNATING ROWS ───────────────────────────── */
+    .facts-grid .fi:nth-child(4n+1),
+    .facts-grid .fi:nth-child(4n+2) { background: #FDFAF6; }
+    .fi-lbl { color: #888; }
+    .fi-val { font-weight: 500; }
+
+    /* ── STEP TRACKER POLISH ──────────────────────────────────── */
+    .step-track {
+      background: #F5F1EB;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── NEXT STEP BOX POLISH ─────────────────────────────────── */
+    .next-step {
+      border-left-width: 5px;
+    }
   </style>
 </head>
 <body>
@@ -1262,7 +1383,8 @@
         <option value="">All Issues</option>
         <option value="unpaid_salary">Unpaid Salary</option>
         <option value="fir_refusal">FIR Refusal</option>
-        <option value="deposit_withheld">Deposit Withheld</option>
+        <option value="refused_deposit">Deposit Withheld</option>
+        <option value="deposit_withheld">Deposit Withheld (legacy)</option>
         <option value="pension_delay">Pension Delay</option>
       </select>
       <label>Urgency</label>
@@ -1401,6 +1523,7 @@
     unpaid_salary:    'Unpaid Salary',
     fir_refusal:      'FIR Refusal',
     deposit_withheld: 'Deposit Withheld',
+    refused_deposit:  'Deposit Withheld',
     pension_delay:    'Pension Delay',
   };
 
@@ -1521,10 +1644,11 @@
 
     el.innerHTML = cases.map(function (c) {
       return '<div class="case-card' + (c.case_id === activeId ? ' active' : '') + '"' +
+             ' data-urgency="' + (c.urgency || 'medium') + '"' +
              ' onclick="loadDetail(\'' + c.case_id + '\')">' +
+        '<div class="cc-issue-badge">' + (ISSUE_LABELS[c.issue_type] || c.issue_type) + '</div>' +
         '<div class="cc-name">'  + escHtml(c.caller_name) + '</div>' +
-        '<div class="cc-meta">'  + (ISSUE_LABELS[c.issue_type] || c.issue_type) +
-                                   ' &nbsp;·&nbsp; ' + escHtml(c.location || '—') +
+        '<div class="cc-meta">'  + escHtml(c.location || '—') +
                                    ' &nbsp;·&nbsp; ' + timeAgo(c.created_at) + '</div>' +
         '<div class="cc-urgency-row">' + urgencyHtml(c.urgency) +
           '<span class="cc-status">' + (STATUS_LABELS[c.status] || c.status) + '</span></div>' +
@@ -1648,7 +1772,17 @@
       '</div>' +
 
       '<div class="ds">' +
-        '<div class="ds-label">Generated Documents</div>' +
+        '<div class="ds-label-row">' +
+          '<div class="ds-label">Generated Documents</div>' +
+          '<div class="export-wrap">' +
+            '<button class="export-btn" onclick="toggleExport(event)">Export ▾</button>' +
+            '<div class="export-dd" id="export-dropdown">' +
+              '<button class="export-dd-item" onclick="exportPDF()">⭳ Download as PDF</button>' +
+              '<span class="export-lawyer-tag">Email recipient: yuvrajhajari@gmail.com</span>' +
+              '<button class="export-dd-item" onclick="emailDocuments()">✉ Email Documents to Lawyer</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
         docsHtml +
       '</div>' +
 
@@ -2143,6 +2277,88 @@ ${escHtml(fields.phone || '')}`;
       statusEl.textContent = 'Could not reach call server. Is it running?';
     }
   }
+
+  /* ── EXPORT: DROPDOWN TOGGLE ────────────────────────────────── */
+  window.toggleExport = function (e) {
+    if (e) e.stopPropagation();
+    var dd = document.getElementById('export-dropdown');
+    if (dd) dd.classList.toggle('open');
+  };
+  document.addEventListener('click', function () {
+    var dd = document.getElementById('export-dropdown');
+    if (dd) dd.classList.remove('open');
+  });
+
+  /* ── EXPORT: COLLECT PLAIN TEXT FROM RENDERED DOC BOXES ─────── */
+  function getDocumentText() {
+    var boxes = document.querySelectorAll('#detail .doc-box');
+    if (!boxes.length) return '';
+    var out = '';
+    boxes.forEach(function (box, i) {
+      if (i > 0) out += '\n\n' + '─'.repeat(50) + '\n\n';
+      out += 'DOCUMENT ' + (i + 1) + '\n' + '─'.repeat(40) + '\n\n';
+      out += box.innerText.trim();
+    });
+    return out;
+  }
+
+  /* ── EXPORT: PDF (opens branded print window) ───────────────── */
+  window.exportPDF = function () {
+    var caseId  = activeId || 'case';
+    var docText = getDocumentText();
+    if (!docText.trim()) { showToast('No documents to export.'); return; }
+    var esc = function (s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    };
+    var date = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    var w = window.open('', '_blank', 'width=860,height=720');
+    w.document.write(
+      '<!DOCTYPE html><html><head>' +
+      '<title>NyayOS \u2014 Case ' + esc(caseId) + ' \u2014 Legal Documents</title>' +
+      '<style>' +
+        'body{font-family:"Courier New",Courier,monospace;font-size:11px;line-height:1.9;' +
+          'padding:48px 56px;color:#1E2229;background:#fff;max-width:800px;margin:0 auto}' +
+        '.brand{font-family:Georgia,serif;font-size:26px;font-weight:700;margin-bottom:3px}' +
+        '.sub{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:28px}' +
+        '.rule{border:none;border-top:1px solid #bbb;margin:22px 0}' +
+        'pre{white-space:pre-wrap;font-size:11px;line-height:1.9}' +
+        '.prt-btn{margin-top:26px;padding:9px 22px;border:none;background:#1E2229;' +
+          'color:#fff;font-family:"Courier New",monospace;font-size:10px;' +
+          'letter-spacing:1.2px;text-transform:uppercase;cursor:pointer}' +
+        '@media print{.prt-btn{display:none}body{padding:20px 24px}}' +
+      '</style></head><body>' +
+      '<div class="brand">The Nyay</div>' +
+      '<div class="sub">Legal Documents &nbsp;|&nbsp; Case: ' + esc(caseId) +
+        ' &nbsp;|&nbsp; ' + date + '</div>' +
+      '<hr class="rule">' +
+      '<pre>' + esc(docText) + '</pre>' +
+      '<button class="prt-btn" onclick="window.print()">Print / Save as PDF \u2192</button>' +
+      '</body></html>'
+    );
+    w.document.close();
+    var dd = document.getElementById('export-dropdown');
+    if (dd) dd.classList.remove('open');
+  };
+
+  /* ── EXPORT: EMAIL TO LAWYER (mailto) ───────────────────────── */
+  window.emailDocuments = function () {
+    var caseId  = activeId || 'case';
+    var docText = getDocumentText();
+    if (!docText.trim()) { showToast('No documents to email.'); return; }
+    var subject = 'NyayOS Legal Documents \u2014 Case ' + caseId;
+    var body    =
+      'Dear Advocate,\n\n' +
+      'Please find the generated legal documents for Case ' + caseId + ' below.\n\n' +
+      docText +
+      '\n\nRegards,\nNyayOS Team';
+    window.open(
+      'mailto:yuvrajhajari@gmail.com' +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body='    + encodeURIComponent(body)
+    );
+    var dd = document.getElementById('export-dropdown');
+    if (dd) dd.classList.remove('open');
+  };
 
   /* ── INIT ───────────────────────────────────────────────────── */
   /* loadCases() is deferred until NGO gate is passed */
