@@ -412,6 +412,36 @@ app.patch('/cases/:id/status', async (req, res) => {
   }
 });
 
+// POST /start-call — triggers outbound Bolna call to citizen
+app.post('/start-call', async (req, res) => {
+  try {
+    const { phone, agent_id } = req.body;
+    if (!phone) return res.status(400).json({ error: 'Missing phone number' });
+    if (!agent_id) return res.status(400).json({ error: 'Missing agent_id' });
+
+    const BOLNA_API_KEY = process.env.BOLNA_API_KEY || 'bn-1a07e6b72aac4ef5901e0f03232b37ee';
+
+    const response = await fetch('https://api.bolna.ai/call', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${BOLNA_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        agent_id,
+        recipient_phone_number: phone,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(`[/start-call] phone=${phone} agent=${agent_id} status=${response.status}`);
+    res.status(response.status).json(data);
+  } catch (err) {
+    console.error('[/start-call] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 app.listen(PORT, () => console.log(`NyayOS API running on port ${PORT}`));

@@ -183,6 +183,12 @@
     .landing-btn:hover::before { bottom: 0; }
     .landing-btn-ngo::before  { background: var(--ink); }
     .landing-btn-cit::before  { background: var(--crimson); }
+    
+    /* New Call Button CSS */
+    .landing-btn-call::before  { background: var(--green); }
+    .landing-btn-call .btn-arrow { color: var(--green); }
+    .landing-btn-call .btn-label { color: var(--green); }
+
     .landing-btn:hover .btn-label,
     .landing-btn:hover .btn-title,
     .landing-btn:hover .btn-sub,
@@ -938,7 +944,6 @@
 </head>
 <body>
 
-<!-- ══ MASTHEAD ═══════════════════════════════════════════════ -->
 <div class="masthead">
   <div class="masthead-brand">The Nyay</div>
   <div class="masthead-tagline">Where the law meets the people who need it most.</div>
@@ -946,13 +951,11 @@
   <div class="masthead-meta">Bangalore, India &nbsp;&nbsp;|&nbsp;&nbsp; Legal Infrastructure for Citizen Rights &nbsp;&nbsp;|&nbsp;&nbsp; Vol.&nbsp;I</div>
 </div>
 
-<!-- ══ NEWS CAROUSEL ══════════════════════════════════════════ -->
 <div class="carousel-wrap" id="main-carousel">
 
   <div class="carousel-item active" id="ci-0">
     <div class="carousel-img">
       <img src="/images/unpaidsalary.webp" alt="Unpaid Salary"/>
-      <!-- Replace this div with your image -->
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Labour Law</div>
@@ -965,7 +968,6 @@
   <div class="carousel-item" id="ci-1">
     <div class="carousel-img">
       <img src="/images/deposit.jpg" alt="Security Deposit"/>
-      <!-- Replace this div with your image -->
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Tenancy Law</div>
@@ -978,7 +980,6 @@
   <div class="carousel-item" id="ci-2">
     <div class="carousel-img">
       <img src="/images/police.avif" alt="FIR Refusal"/>
-      <!-- Replace this div with your image -->
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Criminal Law</div>
@@ -991,7 +992,6 @@
   <div class="carousel-item" id="ci-3">
     <div class="carousel-img">
       <img src="/images/pension.jpg" alt="Pension Delay"/>
-      <!-- Replace this div with your image -->
     </div>
     <div class="carousel-body">
       <div class="carousel-tag">Pension &amp; Banking</div>
@@ -1003,7 +1003,6 @@
 
 </div>
 
-<!-- ══ LANDING — PORTAL SELECTION ════════════════════════════ -->
 <div id="view-landing">
   <div class="landing-intro">Select your portal to continue</div>
   <div class="landing-buttons">
@@ -1026,10 +1025,18 @@
       <span class="btn-arrow">→</span>
     </button>
 
+    <button class="landing-btn landing-btn-call" onclick="switchView('call')">
+      <span class="btn-label">Get Legal Help</span>
+      <div>
+        <div class="btn-title">Call<br>NyayOS</div>
+        <div class="btn-sub">Speak to AI Agent<br>Get Your Case Filed<br>Instant Legal Help</div>
+      </div>
+      <span class="btn-arrow">→</span>
+    </button>
+
   </div>
 </div>
 
-<!-- ══ VIEW A — NGO WORKSPACE ═════════════════════════════════ -->
 <div id="view-ngo">
 
   <div class="back-bar">
@@ -1038,13 +1045,11 @@
     <span class="back-title">NGO Workspace</span>
   </div>
 
-  <!-- Page header -->
   <div class="page-header">
     <div class="page-header-title">NGO Workspace</div>
     <div class="page-header-sub">Paralegal access &nbsp;·&nbsp; Case management &nbsp;·&nbsp; Legal drafting</div>
   </div>
 
-  <!-- Password gate -->
   <div id="ngo-gate">
     <svg class="gate-ornament" viewBox="0 0 560 36" height="36">
       <path d="M0,18 Q17.5,2 35,18 Q52.5,2 70,18 Q87.5,2 105,18 Q122.5,2 140,18 Q157.5,2 175,18 Q192.5,2 210,18 Q227.5,2 245,18 Q262.5,2 280,18 Q297.5,2 315,18 Q332.5,2 350,18 Q367.5,2 385,18 Q402.5,2 420,18 Q437.5,2 455,18 Q472.5,2 490,18 Q507.5,2 525,18 Q542.5,2 560,18" fill="none" stroke="#D4C9B8" stroke-width="1"/>
@@ -1060,16 +1065,13 @@
     </div>
   </div>
 
-  <!-- Actual workspace — shown after auth -->
   <div id="ngo-workspace">
 
-    <!-- Decorative ornament above filter ribbon -->
     <svg class="ornament" viewBox="0 0 1200 36" preserveAspectRatio="xMidYMid slice">
       <path d="M0,18 Q30,2 60,18 Q90,2 120,18 Q150,2 180,18 Q210,2 240,18 Q270,2 300,18 Q330,2 360,18 Q390,2 420,18 Q450,2 480,18 Q510,2 540,18 Q570,2 600,18 Q630,2 660,18 Q690,2 720,18 Q750,2 780,18 Q810,2 840,18 Q870,2 900,18 Q930,2 960,18 Q990,2 1020,18 Q1050,2 1080,18 Q1110,2 1140,18 Q1170,2 1200,18" fill="none" stroke="#D4C9B8" stroke-width="1"/>
       <path d="M0,18 Q30,34 60,18 Q90,34 120,18 Q150,34 180,18 Q210,34 240,18 Q270,34 300,18 Q330,34 360,18 Q390,34 420,18 Q450,34 480,18 Q510,34 540,18 Q570,34 600,18 Q630,34 660,18 Q690,34 720,18 Q750,34 780,18 Q810,34 840,18 Q870,34 900,18 Q930,34 960,18 Q990,34 1020,18 Q1050,34 1080,18 Q1110,34 1140,18 Q1170,34 1200,18" fill="none" stroke="#D4C9B8" stroke-width="1"/>
     </svg>
 
-    <!-- Filter ribbon -->
     <div class="filter-ribbon">
       <label>Issue</label>
       <select id="filter-issue" onchange="loadCases()">
@@ -1099,7 +1101,6 @@
       <span id="ribbon-count"></span>
     </div>
 
-    <!-- Two-column split -->
     <div class="workspace">
       <div class="col-list" id="case-list">
         <div class="load-txt">Loading cases...</div>
@@ -1112,12 +1113,7 @@
       </div>
     </div>
 
-  </div><!-- /ngo-workspace -->
-
-</div><!-- /view-ngo -->
-
-<!-- ══ VIEW B — CITIZEN CASE LOOKUP ══════════════════════════ -->
-<div id="view-citizen">
+  </div></div><div id="view-citizen">
 
   <div class="back-bar">
     <a onclick="switchView('home')">← Portal</a>
@@ -1125,13 +1121,11 @@
     <span class="back-title">Citizen Case Lookup</span>
   </div>
 
-  <!-- Page header -->
   <div class="page-header">
     <div class="page-header-title">Citizen Case Lookup</div>
     <div class="page-header-sub">Search by name &nbsp;·&nbsp; All active cases &nbsp;·&nbsp; PIN required to view details</div>
   </div>
 
-  <!-- Search bar -->
   <div class="cit-top">
     <div class="cit-search-row">
       <input class="cit-search-input" type="text" id="cit-search" placeholder="Type a name — e.g. Tinku, Arjun..." oninput="searchCitizenCases()"/>
@@ -1140,16 +1134,66 @@
     </div>
   </div>
 
-  <!-- Cards -->
   <div class="cit-cards-wrap">
     <div class="cit-count" id="cit-count"></div>
     <div id="citizen-cards"><div class="load-txt">Loading cases...</div></div>
   </div>
 
-</div><!-- /view-citizen -->
+</div><div id="view-call" style="display:none; flex:1; flex-direction:column; overflow-y:auto;">
 
-<!-- ══ SHARED FOOTER ══════════════════════════════════════════ -->
-<div class="site-footer">
+  <div class="back-bar">
+    <a onclick="switchView('home')">← Portal</a>
+    <span class="back-sep">·</span>
+    <span class="back-title">Call NyayOS Agent</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header-title">Get Legal Help by Phone</div>
+    <div class="page-header-sub">Enter your number &nbsp;·&nbsp; Select your issue &nbsp;·&nbsp; Receive a call instantly</div>
+  </div>
+
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px;">
+    <div style="width:100%; max-width:420px;">
+
+      <div style="font-family:var(--mono); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#AAA; margin-bottom:24px; text-align:center;">
+        Our AI legal agent will call you within seconds
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#888; display:block; margin-bottom:6px;">Your Phone Number (with country code)</label>
+        <input id="call-phone" type="tel" placeholder="+91XXXXXXXXXX"
+          style="width:100%; padding:11px 13px; border:1px solid var(--border); font-family:var(--mono); font-size:13px; background:var(--canvas); color:var(--ink); letter-spacing:1px;"
+        />
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#888; display:block; margin-bottom:6px;">Issue Type</label>
+        <select id="call-issue"
+          style="width:100%; padding:11px 13px; border:1px solid var(--border); font-family:var(--mono); font-size:12px; background:var(--canvas); color:var(--ink); cursor:pointer;">
+          <option value="unpaid_salary">Unpaid Salary</option>
+          <option value="fir_refusal">FIR / Police Complaint Refusal</option>
+          <option value="deposit_withheld">Landlord Security Deposit</option>
+          <option value="pension_delay">Pension / Benefit Delay</option>
+        </select>
+      </div>
+
+      <button onclick="placeCall()"
+        style="width:100%; padding:13px; border:2px solid var(--ink); background:var(--canvas); font-family:var(--mono); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--ink); cursor:pointer;">
+        Call Me Now →
+      </button>
+
+      <div id="call-status" style="font-family:var(--mono); font-size:11px; color:#AAA; text-align:center; margin-top:16px; min-height:20px;"></div>
+
+      <div style="margin-top:32px; border-top:1px solid var(--border); padding-top:20px; font-family:var(--mono); font-size:10px; color:#AAA; text-align:center; line-height:1.8;">
+        The AI agent will ask you questions about your issue.<br>
+        Your case will be automatically saved to the dashboard.<br>
+        The entire call is confidential.
+      </div>
+
+    </div>
+  </div>
+
+</div><div class="site-footer">
   <div class="footer-brand">The Nyay</div>
   <div class="footer-tagline">"Every voice deserves to be heard in court."</div>
   <div class="footer-meta">Bangalore, India &nbsp;·&nbsp; Legal Infrastructure for Citizen Rights &nbsp;·&nbsp; Vol. I · 2026</div>
@@ -1192,6 +1236,7 @@
     var landing  = document.getElementById('view-landing');
     var ngo      = document.getElementById('view-ngo');
     var citizen  = document.getElementById('view-citizen');
+    var callView = document.getElementById('view-call');
     var carousel = document.getElementById('main-carousel');
     var masthead = document.querySelector('.masthead');
     var footer   = document.querySelector('.site-footer');
@@ -1200,11 +1245,12 @@
     landing.style.display  = isHome           ? 'flex'  : 'none';
     ngo.style.display      = v === 'ngo'      ? 'flex'  : 'none';
     citizen.style.display  = v === 'citizen'  ? 'flex'  : 'none';
+    callView.style.display = v === 'call'     ? 'flex'  : 'none';
     carousel.style.display = isHome           ? 'block' : 'none';
     masthead.style.display = isHome           ? ''      : 'none';
     footer.style.display   = isHome           ? ''      : 'none';
 
-    var target = v === 'ngo' ? ngo : v === 'citizen' ? citizen : landing;
+    var target = v === 'ngo' ? ngo : v === 'citizen' ? citizen : v === 'call' ? callView : landing;
     target.classList.remove('page-enter');
     void target.offsetWidth;
     target.classList.add('page-enter');
@@ -1867,6 +1913,51 @@ ${escHtml(fields.phone || '')}`;
       .replace(/</g,  '&lt;')
       .replace(/>/g,  '&gt;')
       .replace(/\n/g, '<br>');
+  }
+
+  /* ── AGENT IDS ─────────────────────────────────────────────── */
+  const AGENT_IDS = {
+    unpaid_salary:    '513e9b1d-441e-4e24-95dd-5d2bd2b7c973',
+    fir_refusal:      'PASTE_FIR_AGENT_ID_HERE',
+    deposit_withheld: 'PASTE_DEPOSIT_AGENT_ID_HERE',
+    pension_delay:    'PASTE_PENSION_AGENT_ID_HERE',
+  };
+
+  const FASTAPI_URL = 'https://nyayos-v27p.onrender.com';
+
+  async function placeCall() {
+    const phone = document.getElementById('call-phone').value.trim();
+    const issue = document.getElementById('call-issue').value;
+    const statusEl = document.getElementById('call-status');
+
+    if (!phone) {
+      statusEl.style.color = 'var(--crimson)';
+      statusEl.textContent = 'Please enter your phone number.';
+      return;
+    }
+
+    const agentId = AGENT_IDS[issue];
+    statusEl.style.color = '#AAA';
+    statusEl.textContent = 'Placing your call...';
+
+    try {
+      const res = await fetch(FASTAPI_URL + '/start-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, agent_id: agentId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = '✓ Call initiated. You will receive a call shortly.';
+      } else {
+        statusEl.style.color = 'var(--crimson)';
+        statusEl.textContent = 'Error: ' + (data.detail || 'Could not place call.');
+      }
+    } catch (e) {
+      statusEl.style.color = 'var(--crimson)';
+      statusEl.textContent = 'Could not reach call server. Is it running?';
+    }
   }
 
   /* ── INIT ───────────────────────────────────────────────────── */
